@@ -255,9 +255,9 @@ router.get("/:id/loads", function (req, res) {
   });
 });
 
-function hasFalsyValue(obj) {
-  for (let key in obj) {
-    if (!obj[key]) {
+function hasFalsyValue(arr) {
+  for (const el of arr) {
+    if (!el) {
       return true;
     }
   }
@@ -265,25 +265,19 @@ function hasFalsyValue(obj) {
 }
 
 router.post("/", function (req, res) {
-  const {
-    company_id,
-    truck_vin,
-    trailer_vin,
-    truck_model,
-    trailer_type,
-    trailer_capacity,
-  } = req.body;
+  // ignore any extraneous attributes by only extracting relevant values from request
+  const truck_values = [
+    req.body.company_id,
+    req.body.truck_vin,
+    req.body.trailer_vin,
+    req.body.truck_model,
+    req.body.trailer_type,
+    req.body.trailer_capacity,
+  ];
 
   // ensure all required attributes are included in the request
-  if (!hasFalsyValue(new_truck)) {
-    post_truck(
-      company_id,
-      truck_vin,
-      trailer_vin,
-      truck_model,
-      trailer_type,
-      trailer_capacity
-    ).then((key) => {
+  if (!hasFalsyValue(truck_values)) {
+    post_truck(...truck_values).then((key) => {
       get_item_by_id(TRUCK, key.id).then((truck) => {
         res.status(201).send({
           ...truck[0],
