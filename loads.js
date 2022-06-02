@@ -8,7 +8,7 @@ const { entity } = require("@google-cloud/datastore/build/src/entity");
 const datastore = ds.datastore;
 
 const LOAD = "Load";
-const BOAT = "Boat";
+const TRUCK = "Truck";
 
 router.use(bodyParser.json());
 
@@ -42,7 +42,7 @@ function get_loads(req) {
           ...row,
           carrier: {
             ...row.carrier,
-            self: `${req.protocol}://${req.get("host")}/boats/${
+            self: `${req.protocol}://${req.get("host")}/trucks/${
               row.carrier.id
             }`,
           },
@@ -97,12 +97,12 @@ function delete_load(id) {
   return datastore.delete(key);
 }
 
-// remove a load id from a boat's list of loads
-function patch_boat(bid, lid) {
-  const l_key = datastore.key([BOAT, parseInt(bid, 10)]);
-  return datastore.get(l_key).then((boat) => {
-    boat[0].loads = boat[0].loads.filter((load) => load != lid);
-    return datastore.save({ key: l_key, data: boat[0] });
+// remove a load id from a truck's list of loads
+function patch_truck(bid, lid) {
+  const l_key = datastore.key([TRUCK, parseInt(bid, 10)]);
+  return datastore.get(l_key).then((truck) => {
+    truck[0].loads = truck[0].loads.filter((load) => load != lid);
+    return datastore.save({ key: l_key, data: truck[0] });
   });
 }
 
@@ -126,7 +126,7 @@ router.get("/:id", function (req, res) {
         // modify output so that it includes self link for carrier
         carrier = {
           ...carrier,
-          self: `${req.protocol}://${req.get("host")}/boats/${carrier.id}`,
+          self: `${req.protocol}://${req.get("host")}/trucks/${carrier.id}`,
         };
       }
 
@@ -189,17 +189,17 @@ router.delete("/:id", function (req, res) {
         Error: "No load with this load_id exists",
       });
     } else {
-      let boat_id;
-      // check if load is on a boat
+      let truck_id;
+      // check if load is on a truck
       if (load[0].carrier) {
-        boat_id = load[0].carrier.id;
+        truck_id = load[0].carrier.id;
       }
 
       delete_load(id)
         .then(() => {
-          // remove load from boat's list of loads
-          if (boat_id) {
-            patch_boat(boat_id, id);
+          // remove load from truck's list of loads
+          if (truck_id) {
+            patch_truck(truck_id, id);
           }
         })
         .finally(res.status(204).end());

@@ -5,22 +5,22 @@ const ds = require("./datastore");
 
 const datastore = ds.datastore;
 
-const BOAT = "Boat";
+const TRUCK = "Truck";
 const LOAD = "Load";
 
 router.use(bodyParser.json());
 
-/* ------------- Begin Boat Model Functions ------------- */
-function post_boat(name, type, length) {
-  var key = datastore.key(BOAT);
-  const new_boat = { name: name, type: type, length: length, loads: [] };
-  return datastore.save({ key: key, data: new_boat }).then(() => {
+/* ------------- Begin Truck Model Functions ------------- */
+function post_truck(name, type, length) {
+  var key = datastore.key(TRUCK);
+  const new_truck = { name: name, type: type, length: length, loads: [] };
+  return datastore.save({ key: key, data: new_truck }).then(() => {
     return key;
   });
 }
 
-function get_boats(req) {
-  var q = datastore.createQuery(BOAT).limit(3);
+function get_trucks(req) {
+  var q = datastore.createQuery(TRUCK).limit(3);
   const results = {};
   if (Object.keys(req.query).includes("cursor")) {
     q = q.start(req.query.cursor);
@@ -29,10 +29,10 @@ function get_boats(req) {
   return datastore.runQuery(q).then((entities) => {
     const rows = entities[0].map(ds.fromDatastore);
     // modify output so that it includes self link
-    results.boats = rows.map((row) => {
+    results.trucks = rows.map((row) => {
       return {
         ...row,
-        self: `${req.protocol}://${req.get("host")}/boats/${row.id}`,
+        self: `${req.protocol}://${req.get("host")}/trucks/${row.id}`,
       };
     });
 
@@ -61,15 +61,15 @@ function get_item_by_id(kind, id) {
   });
 }
 
-function get_boat_loads(req, id) {
-  const key = datastore.key([BOAT, parseInt(id, 10)]);
+function get_truck_loads(req, id) {
+  const key = datastore.key([TRUCK, parseInt(id, 10)]);
 
   return (
     datastore
       .get(key)
-      .then((boats) => {
-        const boat = boats[0];
-        const load_keys = boat.loads.map((lid) => {
+      .then((trucks) => {
+        const truck = trucks[0];
+        const load_keys = truck.loads.map((lid) => {
           return datastore.key([LOAD, parseInt(lid, 10)]);
         });
         return datastore.get(load_keys);
@@ -82,7 +82,7 @@ function get_boat_loads(req, id) {
             ...load,
             carrier: {
               ...load.carrier,
-              self: `${req.protocol}://${req.get("host")}/boats/${
+              self: `${req.protocol}://${req.get("host")}/trucks/${
                 load.carrier.id
               }`,
             },
@@ -96,73 +96,73 @@ function get_boat_loads(req, id) {
   );
 }
 
-function put_boat(id, name, type, length) {
-  const key = datastore.key([BOAT, parseInt(id, 10)]);
-  const boat = { name: name, type: type, length: length };
-  return datastore.save({ key: key, data: boat });
+function put_truck(id, name, type, length) {
+  const key = datastore.key([TRUCK, parseInt(id, 10)]);
+  const truck = { name: name, type: type, length: length };
+  return datastore.save({ key: key, data: truck });
 }
 
-function delete_boat(id) {
-  const key = datastore.key([BOAT, parseInt(id, 10)]);
+function delete_truck(id) {
+  const key = datastore.key([TRUCK, parseInt(id, 10)]);
   return datastore.delete(key);
 }
 
 function put_loading(bid, lid) {
-  const l_key = datastore.key([BOAT, parseInt(bid, 10)]);
-  return datastore.get(l_key).then((boat) => {
-    if (typeof boat[0].loads === "undefined") {
-      boat[0].loads = [];
+  const l_key = datastore.key([TRUCK, parseInt(bid, 10)]);
+  return datastore.get(l_key).then((truck) => {
+    if (typeof truck[0].loads === "undefined") {
+      truck[0].loads = [];
     }
-    boat[0].loads.push(lid);
-    return datastore.save({ key: l_key, data: boat[0] });
+    truck[0].loads.push(lid);
+    return datastore.save({ key: l_key, data: truck[0] });
   });
 }
 
-// remove a load id from a boat's list of loads
-function patch_boat(bid, lid) {
-  const l_key = datastore.key([BOAT, parseInt(bid, 10)]);
-  return datastore.get(l_key).then((boat) => {
-    boat[0].loads = boat[0].loads.filter((load) => load != lid);
-    return datastore.save({ key: l_key, data: boat[0] });
+// remove a load id from a truck's list of loads
+function patch_truck(bid, lid) {
+  const l_key = datastore.key([TRUCK, parseInt(bid, 10)]);
+  return datastore.get(l_key).then((truck) => {
+    truck[0].loads = truck[0].loads.filter((load) => load != lid);
+    return datastore.save({ key: l_key, data: truck[0] });
   });
 }
 
-// returns a modified version of a list of boats
-// that includes self links for each boat and for each
-// load in a boat
-function add_self_links(req, boats) {
-  let boats_for_output = [];
-  for (let i = 0; i < boats.boats.length; i++) {
-    let cur_boat = boats.boats[i];
+// returns a modified version of a list of trucks
+// that includes self links for each truck and for each
+// load in a truck
+function add_self_links(req, trucks) {
+  let trucks_for_output = [];
+  for (let i = 0; i < trucks.trucks.length; i++) {
+    let cur_truck = trucks.trucks[i];
     let modified_loads = [];
 
-    for (let j = 0; j < cur_boat.loads.length; j++) {
-      let cur_load_id = cur_boat.loads[j];
+    for (let j = 0; j < cur_truck.loads.length; j++) {
+      let cur_load_id = cur_truck.loads[j];
       modified_loads.push({
         id: cur_load_id,
         self: `${req.protocol}://${req.get("host")}/loads/${cur_load_id}`,
       });
     }
 
-    boats_for_output.push({
-      ...cur_boat,
+    trucks_for_output.push({
+      ...cur_truck,
       loads: modified_loads,
-      self: `${req.protocol}://${req.get("host")}/boats/${cur_boat.id}`,
+      self: `${req.protocol}://${req.get("host")}/trucks/${cur_truck.id}`,
     });
   }
 
-  return { boats: boats_for_output, next: boats.next };
+  return { trucks: trucks_for_output, next: trucks.next };
 }
 
 // update 'carrier' property of a load entity
 // set 'carrier' to null if bid is null or
-// set 'carrier' to obj containing bid & boat name if not null
-function patch_load(lid, bid, boat_name = null) {
+// set 'carrier' to obj containing bid & truck name if not null
+function patch_load(lid, bid, truck_name = null) {
   const key = datastore.key([LOAD, parseInt(lid, 10)]);
   return get_item_by_id(LOAD, lid).then((load) => {
     if (bid !== null) {
       // TODO: ADD NAME
-      carrier = { id: bid, name: boat_name };
+      carrier = { id: bid, name: truck_name };
     } else {
       carrier = null;
     }
@@ -183,31 +183,31 @@ function patch_load(lid, bid, boat_name = null) {
 /* ------------- Begin Controller Functions ------------- */
 
 router.get("/", function (req, res) {
-  const boats = get_boats(req).then((boats) => {
-    res.status(200).json(add_self_links(req, boats));
+  const trucks = get_trucks(req).then((trucks) => {
+    res.status(200).json(add_self_links(req, trucks));
   });
 });
 
 router.get("/:id", function (req, res) {
-  get_item_by_id(BOAT, req.params.id).then((boat) => {
-    if (boat[0] === undefined || boat[0] === null) {
-      res.status(404).json({ Error: "No boat with this boat_id exists" });
+  get_item_by_id(TRUCK, req.params.id).then((truck) => {
+    if (truck[0] === undefined || truck[0] === null) {
+      res.status(404).json({ Error: "No truck with this truck_id exists" });
     } else {
       // modify output of loads so that they include self links
       let transformed_loads = [];
-      for (let i = 0; i < boat[0].loads.length; i++) {
-        let cur_load = boat[0].loads[i];
+      for (let i = 0; i < truck[0].loads.length; i++) {
+        let cur_load = truck[0].loads[i];
         transformed_loads.push({
           id: cur_load,
           self: `${req.protocol}://${req.get("host")}/loads/${cur_load}`,
         });
       }
 
-      // modify output so that it includes self link for boat
+      // modify output so that it includes self link for truck
       res.status(200).json({
-        ...boat[0],
+        ...truck[0],
         loads: transformed_loads,
-        self: `${req.protocol}://${req.get("host")}/boats/${boat[0].id}`,
+        self: `${req.protocol}://${req.get("host")}/trucks/${truck[0].id}`,
       });
     }
   });
@@ -216,14 +216,14 @@ router.get("/:id", function (req, res) {
 router.get("/:id/loads", function (req, res) {
   const id = req.params.id;
 
-  // check if boat id exists in database
-  get_item_by_id(BOAT, id).then((boat) => {
-    if (boat[0] === undefined || boat[0] === null) {
+  // check if truck id exists in database
+  get_item_by_id(TRUCK, id).then((truck) => {
+    if (truck[0] === undefined || truck[0] === null) {
       res.status(404).json({
-        Error: "No boat with this boat_id exists",
+        Error: "No truck with this truck_id exists",
       });
     } else {
-      get_boat_loads(req, id).then((loads) => {
+      get_truck_loads(req, id).then((loads) => {
         // modify output so that it includes self link for each load
         let modified_loads = loads.map((load) => {
           return {
@@ -244,18 +244,18 @@ router.post("/", function (req, res) {
 
   // ensure body includes all 3 required attributes
   if (name && type && length) {
-    post_boat(name, type, length).then((key) => {
-      const new_boat = {
+    post_truck(name, type, length).then((key) => {
+      const new_truck = {
         name: name,
         type: type,
         length: length,
         loads: [],
         id: key.id,
       };
-      // modify output so that it includes self link for boat
+      // modify output so that it includes self link for truck
       res.status(201).send({
-        ...new_boat,
-        self: `${req.protocol}://${req.get("host")}/boats/${key.id}`,
+        ...new_truck,
+        self: `${req.protocol}://${req.get("host")}/trucks/${key.id}`,
       });
     });
   } else {
@@ -267,42 +267,42 @@ router.post("/", function (req, res) {
 });
 
 router.put("/:id", function (req, res) {
-  put_boat(req.params.id, req.body.name, req.body.type, req.body.length).then(
+  put_truck(req.params.id, req.body.name, req.body.type, req.body.length).then(
     res.status(200).end()
   );
 });
 
 router.put("/:bid/loads/:lid", function (req, res) {
-  const boat_id = req.params.bid;
+  const truck_id = req.params.bid;
   const load_id = req.params.lid;
 
-  // check if boat id exists in database
-  get_item_by_id(BOAT, boat_id).then((boat) => {
-    if (boat[0] === undefined || boat[0] === null) {
+  // check if truck id exists in database
+  get_item_by_id(TRUCK, truck_id).then((truck) => {
+    if (truck[0] === undefined || truck[0] === null) {
       res
         .status(404)
-        .json({ Error: "The specified boat and/or load does not exist" });
+        .json({ Error: "The specified truck and/or load does not exist" });
     } else {
       // check if load id exists in database
       get_item_by_id(LOAD, load_id).then((load) => {
         if (load[0] === undefined || load[0] === null) {
           res
             .status(404)
-            .json({ Error: "The specified boat and/or load does not exist" });
+            .json({ Error: "The specified truck and/or load does not exist" });
         } else {
-          // check if load hasn't already been assigned to a boat
-          if (!boat[0].loads.includes(load_id) && load[0].carrier === null) {
-            // update boat's list of loads to include this load
-            put_loading(boat_id, load_id).then(() => {
-              // update load's 'carrier' property to this boat
-              patch_load(load_id, boat_id, boat[0].name).then(
+          // check if load hasn't already been assigned to a truck
+          if (!truck[0].loads.includes(load_id) && load[0].carrier === null) {
+            // update truck's list of loads to include this load
+            put_loading(truck_id, load_id).then(() => {
+              // update load's 'carrier' property to this truck
+              patch_load(load_id, truck_id, truck[0].name).then(
                 res.status(204).end()
               );
             });
           } else {
             res
               .status(403)
-              .json({ Error: "The load is already loaded on another boat" });
+              .json({ Error: "The load is already loaded on another truck" });
           }
         }
       });
@@ -312,13 +312,13 @@ router.put("/:bid/loads/:lid", function (req, res) {
 
 router.delete("/:bid/loads/:lid", function (req, res) {
   const error_msg_404 =
-    "No boat with this boat_id is loaded with the load with this load_id";
-  const boat_id = req.params.bid;
+    "No truck with this truck_id is loaded with the load with this load_id";
+  const truck_id = req.params.bid;
   const load_id = req.params.lid;
 
-  // check if boat id exists in database
-  get_item_by_id(BOAT, boat_id).then((boat) => {
-    if (boat[0] === undefined || boat[0] === null) {
+  // check if truck id exists in database
+  get_item_by_id(TRUCK, truck_id).then((truck) => {
+    if (truck[0] === undefined || truck[0] === null) {
       res.status(404).json({
         Error: error_msg_404,
       });
@@ -330,14 +330,14 @@ router.delete("/:bid/loads/:lid", function (req, res) {
             Error: error_msg_404,
           });
         } else {
-          // check if load is actually on boat
+          // check if load is actually on truck
           if (
-            boat[0].loads.includes(load_id) &&
+            truck[0].loads.includes(load_id) &&
             load[0] !== null &&
-            load[0].carrier.id === boat_id
+            load[0].carrier.id === truck_id
           ) {
-            // remove load from boat's 'loads' property
-            patch_boat(req.params.bid, req.params.lid).then(
+            // remove load from truck's 'loads' property
+            patch_truck(req.params.bid, req.params.lid).then(
               // nullify this load's 'carrier' property
               patch_load(load_id, null).then(res.status(204).end())
             );
@@ -355,22 +355,22 @@ router.delete("/:bid/loads/:lid", function (req, res) {
 router.delete("/:id", function (req, res) {
   const id = req.params.id;
 
-  // check if boat id exists in database
-  get_item_by_id(BOAT, id).then((boat) => {
-    if (boat[0] === undefined || boat[0] === null) {
+  // check if truck id exists in database
+  get_item_by_id(TRUCK, id).then((truck) => {
+    if (truck[0] === undefined || truck[0] === null) {
       res.status(404).json({
-        Error: "No boat with this boat_id exists",
+        Error: "No truck with this truck_id exists",
       });
     } else {
-      // unassign all loads on this boat
+      // unassign all loads on this truck
       let promises = [];
-      for (let i = 0; i < boat[0].loads.length; i++) {
-        let cur_load = boat[0].loads[i];
+      for (let i = 0; i < truck[0].loads.length; i++) {
+        let cur_load = truck[0].loads[i];
         promises.push(patch_load(cur_load, null));
       }
 
       Promise.all(promises).then(() => {
-        delete_boat(id).then(res.status(204).end());
+        delete_truck(id).then(res.status(204).end());
       });
     }
   });
