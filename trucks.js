@@ -255,46 +255,49 @@ router.get("/:id/loads", function (req, res) {
   });
 });
 
-router.post("/", function (req, res) {
-  const company_id = req.body.company_id;
-  const truck_vin = req.body.truck_vin;
-  const trailer_vin = req.body.trailer_vin;
-  const truck_model = req.body.truck_model;
-  const trailer_type = req.body.trailer_type;
-  const trailer_capacity = req.body.trailer_capacity;
+function hasFalsyValue(obj) {
+  for (let key in obj) {
+    if (!obj[key]) {
+      return true;
+    }
+  }
+  return false;
+}
 
-  // ensure body includes all required attributes
-  if (
-    company_id &&
-    truck_vin &&
-    trailer_vin &&
-    truck_model &&
-    trailer_type &&
-    trailer_capacity
-  ) {
+router.post("/", function (req, res) {
+  const {
+    company_id,
+    truck_vin,
+    trailer_vin,
+    truck_model,
+    trailer_type,
+    trailer_capacity,
+  } = req.body;
+
+  const new_truck = {
+    company_id,
+    truck_vin,
+    trailer_vin,
+    truck_model,
+    trailer_type,
+    trailer_capacity,
+  };
+
+  // ensure all required attributes are included in the request
+  if (!hasFalsyValue(new_truck)) {
     post_truck(
-      company_id,
-      truck_vin,
-      trailer_vin,
-      truck_model,
-      trailer_type,
-      trailer_capacity
+      new_truck.company_id,
+      new_truck.truck_vin,
+      new_truck.trailer_vin,
+      new_truck.truck_model,
+      new_truck.trailer_type,
+      new_truck.trailer_capacity
     ).then((key) => {
-      const new_truck = {
-        company_id: company_id,
-        truck_vin: truck_vin,
-        trailer_vin: trailer_vin,
-        truck_model: truck_model,
-        trailer_type: trailer_type,
-        trailer_capacity: trailer_capacity,
-        loads: [],
-        id: key.id,
-      };
-      // modify output so that it includes self link for truck
-      res.status(201).send({
-        ...new_truck,
-        self: `${req.protocol}://${req.get("host")}/trucks/${key.id}`,
-      });
+      // modify reponse to mimic entity in db & to include self link for truck
+      new_truck.loads = [];
+      new_truck.id = key.id;
+      new_truck.self = `${req.protocol}://${req.get("host")}/trucks/${key.id}`;
+      res.status(201).send(new_truck);
     });
   } else {
     res.status(400).json({
