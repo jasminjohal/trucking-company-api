@@ -35,9 +35,64 @@ const hasFalsyValue = function (arr) {
   return false;
 };
 
+function getFiveEntities(kind, req, num_entities, endpoint) {
+  // only display max 5 entities at a time
+  var q = datastore.createQuery(kind).limit(5);
+  const results = {};
+  if (Object.keys(req.query).includes("cursor")) {
+    q = q.start(req.query.cursor);
+  }
+
+  return datastore.runQuery(q).then((entities) => {
+    const rows = entities[0].map(fromDatastore);
+    // modify output so that it includes total number of entities in kind & self link for each truck
+    results.total_entities = num_entities;
+    if (endpoint === "trucks") {
+      results.data = rows.map((row) => {
+        return {
+          ...row,
+          self: `${req.protocol}://${req.get("host")}/${endpoint}/${row.id}`,
+        };
+      });
+    } else if (endpoint === "loads") {
+      results.data = rows.map((row) => {
+        if (row.carrier) {
+          return {
+            ...row,
+            carrier: {
+              ...row.carrier,
+              self: `${req.protocol}://${req.get("host")}/trucks/${
+                row.carrier.id
+              }`,
+            },
+            self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,
+          };
+        } else {
+          return {
+            ...row,
+            self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,
+          };
+        }
+      });
+    }
+
+    if (entities[1].moreResults !== Datastore.NO_MORE_RESULTS) {
+      results.next =
+        req.protocol +
+        "://" +
+        req.get("host") +
+        req.baseUrl +
+        "?cursor=" +
+        entities[1].endCursor;
+    }
+    return results;
+  });
+}
+
 module.exports.Datastore = Datastore;
 module.exports.datastore = datastore;
 module.exports.fromDatastore = fromDatastore;
 module.exports.getEntityByID = getEntityByID;
 module.exports.getEntitiesInKind = getEntitiesInKind;
 module.exports.hasFalsyValue = hasFalsyValue;
+module.exports.getFiveEntities = getFiveEntities;

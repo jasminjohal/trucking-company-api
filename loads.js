@@ -29,60 +29,6 @@ function post_load(vendor, item, quantity, weight) {
   });
 }
 
-function get_loads(req) {
-  var q = datastore.createQuery(LOAD).limit(3);
-  const results = {};
-  if (Object.keys(req.query).includes("cursor")) {
-    q = q.start(req.query.cursor);
-  }
-
-  return datastore.runQuery(q).then((entities) => {
-    const rows = entities[0].map(ds.fromDatastore);
-    // modify output so that it includes self link for each load
-    results.loads = rows.map((row) => {
-      if (row.carrier) {
-        return {
-          ...row,
-          carrier: {
-            ...row.carrier,
-            self: `${req.protocol}://${req.get("host")}/trucks/${
-              row.carrier.id
-            }`,
-          },
-          self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,
-        };
-      } else {
-        return {
-          ...row,
-          self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,
-        };
-      }
-    });
-    if (entities[1].moreResults !== ds.Datastore.NO_MORE_RESULTS) {
-      results.next =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        req.baseUrl +
-        "?cursor=" +
-        entities[1].endCursor;
-    }
-    return results;
-  });
-}
-
-// returns an entity in a kind corresponding to the passed id
-// function get_entity_by_id(kind, id) {
-//   const key = datastore.key([kind, parseInt(id, 10)]);
-//   return datastore.get(key).then((entity) => {
-//     if (entity[0] === undefined || entity[0] === null) {
-//       return entity;
-//     } else {
-//       return entity.map(ds.fromDatastore);
-//     }
-//   });
-// }
-
 function put_load(id, name, volume, item, creation_date) {
   const key = datastore.key([LOAD, parseInt(id, 10)]);
   const load = {
@@ -114,8 +60,19 @@ function patch_truck(bid, lid) {
 /* ------------- Begin Controller Functions ------------- */
 
 router.get("/", function (req, res) {
-  const loads = get_loads(req).then((loads) => {
-    res.status(200).json(loads);
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
+  }
+
+  ds.getEntitiesInKind(LOAD).then((loads) => {
+    const num_loads = loads.length;
+    ds.getFiveEntities(LOAD, req, num_loads, "loads").then((loads) => {
+      // res.status(200).json(add_self_links(req, loads));
+      res.status(200).json(loads);
+    });
   });
 });
 
@@ -149,13 +106,6 @@ router.post("/", function (req, res) {
     return res
       .status(415)
       .json({ Error: "Server only accepts application/json data." });
-  }
-
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
   }
 
   // ignore any extraneous attributes by only extracting relevant values from request

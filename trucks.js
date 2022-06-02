@@ -36,37 +36,37 @@ function post_truck(
   });
 }
 
-function get_five_trucks(req, total_trucks) {
-  // only display max 5 trucks at at ime
-  var q = datastore.createQuery(TRUCK).limit(5);
-  const results = {};
-  if (Object.keys(req.query).includes("cursor")) {
-    q = q.start(req.query.cursor);
-  }
+// function get_five_trucks(req, total_trucks) {
+//   // only display max 5 trucks at at ime
+//   var q = datastore.createQuery(TRUCK).limit(5);
+//   const results = {};
+//   if (Object.keys(req.query).includes("cursor")) {
+//     q = q.start(req.query.cursor);
+//   }
 
-  return datastore.runQuery(q).then((entities) => {
-    const rows = entities[0].map(ds.fromDatastore);
-    // modify output so that it includes total number of entities in kind & self link for each truck
-    results.total_entities = total_trucks;
-    results.trucks = rows.map((row) => {
-      return {
-        ...row,
-        self: `${req.protocol}://${req.get("host")}/trucks/${row.id}`,
-      };
-    });
+//   return datastore.runQuery(q).then((entities) => {
+//     const rows = entities[0].map(ds.fromDatastore);
+//     // modify output so that it includes total number of entities in kind & self link for each truck
+//     results.total_entities = total_trucks;
+//     results.trucks = rows.map((row) => {
+//       return {
+//         ...row,
+//         self: `${req.protocol}://${req.get("host")}/trucks/${row.id}`,
+//       };
+//     });
 
-    if (entities[1].moreResults !== ds.Datastore.NO_MORE_RESULTS) {
-      results.next =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        req.baseUrl +
-        "?cursor=" +
-        entities[1].endCursor;
-    }
-    return results;
-  });
-}
+//     if (entities[1].moreResults !== ds.Datastore.NO_MORE_RESULTS) {
+//       results.next =
+//         req.protocol +
+//         "://" +
+//         req.get("host") +
+//         req.baseUrl +
+//         "?cursor=" +
+//         entities[1].endCursor;
+//     }
+//     return results;
+//   });
+// }
 
 // function get_truck_loads(req, id) {
 //   const key = datastore.key([TRUCK, parseInt(id, 10)]);
@@ -139,8 +139,8 @@ function patch_truck(truck_id, load_id) {
 // load in a truck
 function add_self_links(req, trucks) {
   let trucks_for_output = [];
-  for (let i = 0; i < trucks.trucks.length; i++) {
-    let cur_truck = trucks.trucks[i];
+  for (let i = 0; i < trucks.data.length; i++) {
+    let cur_truck = trucks.data[i];
     let modified_loads = [];
 
     for (let j = 0; j < cur_truck.loads.length; j++) {
@@ -159,7 +159,7 @@ function add_self_links(req, trucks) {
   }
 
   return {
-    trucks: trucks_for_output,
+    data: trucks_for_output,
     next: trucks.next,
     total_entities: trucks.total_entities,
   };
@@ -202,7 +202,7 @@ router.get("/", function (req, res) {
 
   ds.getEntitiesInKind(TRUCK).then((trucks) => {
     const num_trucks = trucks.length;
-    get_five_trucks(req, num_trucks).then((trucks) => {
+    ds.getFiveEntities(TRUCK, req, num_trucks, "trucks").then((trucks) => {
       res.status(200).json(add_self_links(req, trucks));
     });
   });
@@ -270,13 +270,6 @@ router.post("/", function (req, res) {
     return res
       .status(415)
       .json({ Error: "Server only accepts application/json data." });
-  }
-
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
   }
 
   // ignore any extraneous attributes by only extracting relevant values from request
