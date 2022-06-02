@@ -36,26 +36,6 @@ function post_truck(
   });
 }
 
-// returns list of entities in kind
-function get_entities_in_kind(kind) {
-  const q = datastore.createQuery(kind);
-  return datastore.runQuery(q).then((entities) => {
-    return entities[0].map(ds.fromDatastore);
-  });
-}
-
-// returns an entity in a kind corresponding to the passed id
-function get_entity_by_id(kind, id) {
-  const key = datastore.key([kind, parseInt(id, 10)]);
-  return datastore.get(key).then((entity) => {
-    if (entity[0] === undefined || entity[0] === null) {
-      return entity;
-    } else {
-      return entity.map(ds.fromDatastore);
-    }
-  });
-}
-
 function get_five_trucks(req, total_trucks) {
   // only display max 5 trucks at at ime
   var q = datastore.createQuery(TRUCK).limit(5);
@@ -190,7 +170,7 @@ function add_self_links(req, trucks) {
 // set 'carrier' to obj containing truck_id & truck name if not null
 function patch_load(load_id, truck_id, truck_name = null) {
   const key = datastore.key([LOAD, parseInt(load_id, 10)]);
-  return get_entity_by_id(LOAD, load_id).then((load) => {
+  return ds.getEntityByID(LOAD, load_id).then((load) => {
     if (truck_id !== null) {
       carrier = { id: truck_id, name: truck_name };
     } else {
@@ -220,7 +200,7 @@ router.get("/", function (req, res) {
     });
   }
 
-  get_entities_in_kind(TRUCK).then((trucks) => {
+  ds.getEntitiesInKind(TRUCK).then((trucks) => {
     const num_trucks = trucks.length;
     get_five_trucks(req, num_trucks).then((trucks) => {
       res.status(200).json(add_self_links(req, trucks));
@@ -236,7 +216,7 @@ router.get("/:id", function (req, res) {
     });
   }
 
-  get_entity_by_id(TRUCK, req.params.id).then((truck) => {
+  ds.getEntityByID(TRUCK, req.params.id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
       res.status(404).json({ Error: "No truck with this truck_id exists" });
     } else {
@@ -264,7 +244,7 @@ router.get("/:id", function (req, res) {
 //   const id = req.params.id;
 
 //   // check if truck id exists in database
-//   get_entity_by_id(TRUCK, id).then((truck) => {
+//   ds.getEntityByID(TRUCK, id).then((truck) => {
 //     if (truck[0] === undefined || truck[0] === null) {
 //       res.status(404).json({
 //         Error: "No truck with this truck_id exists",
@@ -322,7 +302,7 @@ router.post("/", function (req, res) {
   if (!hasFalsyValue(truck_values)) {
     post_truck(...truck_values).then((key) => {
       // get the truck that was just created
-      get_entity_by_id(TRUCK, key.id).then((truck) => {
+      ds.getEntityByID(TRUCK, key.id).then((truck) => {
         res.status(201).send({
           ...truck[0],
           // modify reponse to include self link for truck
@@ -349,14 +329,14 @@ router.put("/:truck_id/loads/:load_id", function (req, res) {
   const load_id = req.params.load_id;
 
   // check if truck id exists in database
-  get_entity_by_id(TRUCK, truck_id).then((truck) => {
+  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
       res
         .status(404)
         .json({ Error: "The specified truck and/or load does not exist" });
     } else {
       // check if load id exists in database
-      get_entity_by_id(LOAD, load_id).then((load) => {
+      ds.getEntityByID(LOAD, load_id).then((load) => {
         if (load[0] === undefined || load[0] === null) {
           res
             .status(404)
@@ -389,14 +369,14 @@ router.delete("/:truck_id/loads/:load_id", function (req, res) {
   const load_id = req.params.load_id;
 
   // check if truck id exists in database
-  get_entity_by_id(TRUCK, truck_id).then((truck) => {
+  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
       res.status(404).json({
         Error: error_msg_404,
       });
     } else {
       // check if load id exists in database
-      get_entity_by_id(LOAD, load_id).then((load) => {
+      ds.getEntityByID(LOAD, load_id).then((load) => {
         if (load[0] === undefined || load[0] === null) {
           res.status(404).json({
             Error: error_msg_404,
@@ -428,7 +408,7 @@ router.delete("/:id", function (req, res) {
   const id = req.params.id;
 
   // check if truck id exists in database
-  get_entity_by_id(TRUCK, id).then((truck) => {
+  ds.getEntityByID(TRUCK, id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
       res.status(404).json({
         Error: "No truck with this truck_id exists",

@@ -13,15 +13,18 @@ const TRUCK = "Truck";
 router.use(bodyParser.json());
 
 /* ------------- Begin load Model Functions ------------- */
-function post_load(volume, item, creation_date) {
+
+// add a new load entity
+function post_load(vendor, item, quantity, weight) {
   var key = datastore.key(LOAD);
-  const new_load = {
-    volume: volume,
+  const new_truck = {
+    vendor,
+    item,
+    quantity,
+    weight,
     carrier: null,
-    item: item,
-    creation_date: creation_date,
   };
-  return datastore.save({ key: key, data: new_load }).then(() => {
+  return datastore.save({ key: key, data: new_truck }).then(() => {
     return key;
   });
 }
@@ -69,16 +72,16 @@ function get_loads(req) {
 }
 
 // returns an entity in a kind corresponding to the passed id
-function get_item_by_id(kind, id) {
-  const key = datastore.key([kind, parseInt(id, 10)]);
-  return datastore.get(key).then((entity) => {
-    if (entity[0] === undefined || entity[0] === null) {
-      return entity;
-    } else {
-      return entity.map(ds.fromDatastore);
-    }
-  });
-}
+// function get_entity_by_id(kind, id) {
+//   const key = datastore.key([kind, parseInt(id, 10)]);
+//   return datastore.get(key).then((entity) => {
+//     if (entity[0] === undefined || entity[0] === null) {
+//       return entity;
+//     } else {
+//       return entity.map(ds.fromDatastore);
+//     }
+//   });
+// }
 
 function put_load(id, name, volume, item, creation_date) {
   const key = datastore.key([LOAD, parseInt(id, 10)]);
@@ -117,7 +120,7 @@ router.get("/", function (req, res) {
 });
 
 router.get("/:id", function (req, res) {
-  get_item_by_id(LOAD, req.params.id).then((load) => {
+  ds.getEntityByID(LOAD, req.params.id).then((load) => {
     if (load[0] === undefined || load[0] === null) {
       res.status(404).json({ Error: "No load with this load_id exists" });
     } else {
@@ -140,25 +143,48 @@ router.get("/:id", function (req, res) {
   });
 });
 
-router.post("/", function (req, res) {
-  const volume = req.body.volume;
-  const item = req.body.item;
-  const creation_date = req.body.creation_date;
+function hasFalsyValue(arr) {
+  for (const el of arr) {
+    if (!el) {
+      return true;
+    }
+  }
+  return false;
+}
 
-  // ensure body includes all 3 required attributes
-  if (volume && item && creation_date) {
-    post_load(volume, item, creation_date).then((key) => {
-      const new_load = {
-        volume: volume,
-        item: item,
-        carrier: null,
-        creation_date: creation_date,
-        id: key.id,
-      };
-      // modify output so that it includes self link for load
-      res.status(201).send({
-        ...new_load,
-        self: `${req.protocol}://${req.get("host")}/loads/${key.id}`,
+router.post("/", function (req, res) {
+  // reject requests that aren't JSON
+  if (req.get("content-type") !== "application/json") {
+    return res
+      .status(415)
+      .json({ Error: "Server only accepts application/json data." });
+  }
+
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
+  }
+
+  // ignore any extraneous attributes by only extracting relevant values from request
+  const load_values = [
+    req.body.vendor,
+    req.body.item,
+    req.body.quantity,
+    req.body.weight,
+  ];
+
+  // ensure all required attributes are included in the request
+  if (!hasFalsyValue(load_values)) {
+    post_load(...load_values).then((key) => {
+      // get the truck that was just created
+      ds.getEntityByID(LOAD, key.id).then((load) => {
+        res.status(201).send({
+          ...load[0],
+          // modify reponse to include self link for truck
+          self: `${req.protocol}://${req.get("host")}/loads/${key.id}`,
+        });
       });
     });
   } else {
@@ -183,7 +209,7 @@ router.delete("/:id", function (req, res) {
   const id = req.params.id;
 
   // check if load id exists in database
-  get_item_by_id(LOAD, id).then((load) => {
+  ds.getEntityByID(LOAD, id).then((load) => {
     if (load[0] === undefined || load[0] === null) {
       res.status(404).json({
         Error: "No load with this load_id exists",
