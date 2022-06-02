@@ -23,12 +23,12 @@ function post_truck(
 ) {
   var key = datastore.key(TRUCK);
   const new_truck = {
-    company_id: company_id,
-    truck_vin: truck_vin,
-    trailer_vin: trailer_vin,
-    truck_model: truck_model,
-    trailer_type: trailer_type,
-    trailer_capacity: trailer_capacity,
+    company_id,
+    truck_vin,
+    trailer_vin,
+    truck_model,
+    trailer_type,
+    trailer_capacity,
     loads: [],
   };
   return datastore.save({ key: key, data: new_truck }).then(() => {
@@ -274,30 +274,23 @@ router.post("/", function (req, res) {
     trailer_capacity,
   } = req.body;
 
-  const new_truck = {
-    company_id,
-    truck_vin,
-    trailer_vin,
-    truck_model,
-    trailer_type,
-    trailer_capacity,
-  };
-
   // ensure all required attributes are included in the request
   if (!hasFalsyValue(new_truck)) {
     post_truck(
-      new_truck.company_id,
-      new_truck.truck_vin,
-      new_truck.trailer_vin,
-      new_truck.truck_model,
-      new_truck.trailer_type,
-      new_truck.trailer_capacity
+      company_id,
+      truck_vin,
+      trailer_vin,
+      truck_model,
+      trailer_type,
+      trailer_capacity
     ).then((key) => {
-      // modify reponse to mimic entity in db & to include self link for truck
-      new_truck.loads = [];
-      new_truck.id = key.id;
-      new_truck.self = `${req.protocol}://${req.get("host")}/trucks/${key.id}`;
-      res.status(201).send(new_truck);
+      get_item_by_id(TRUCK, key.id).then((truck) => {
+        res.status(201).send({
+          ...truck[0],
+          // modify reponse to include self link for truck
+          self: `${req.protocol}://${req.get("host")}/trucks/${key.id}`,
+        });
+      });
     });
   } else {
     res.status(400).json({
