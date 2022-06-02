@@ -19,15 +19,25 @@ const getEntityByID = function (kind, id) {
 };
 
 // returns list of entities in kind
-function getEntitiesInKind(kind) {
+const getEntitiesInKind = function (kind) {
   const q = datastore.createQuery(kind);
   return datastore.runQuery(q).then((entities) => {
     return entities[0].map(fromDatastore);
   });
-}
+};
+
+const hasFalsyValue = function (arr) {
+  for (const el of arr) {
+    if (!el) {
+      return true;
+    }
+  }
+  return false;
+};
 
 module.exports.Datastore = Datastore;
 module.exports.datastore = datastore;
 module.exports.fromDatastore = fromDatastore;
 module.exports.getEntityByID = getEntityByID;
 module.exports.getEntitiesInKind = getEntitiesInKind;
+module.exports.hasFalsyValue = hasFalsyValue;

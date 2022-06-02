@@ -143,15 +143,6 @@ router.get("/:id", function (req, res) {
   });
 });
 
-function hasFalsyValue(arr) {
-  for (const el of arr) {
-    if (!el) {
-      return true;
-    }
-  }
-  return false;
-}
-
 router.post("/", function (req, res) {
   // reject requests that aren't JSON
   if (req.get("content-type") !== "application/json") {
@@ -176,7 +167,7 @@ router.post("/", function (req, res) {
   ];
 
   // ensure all required attributes are included in the request
-  if (!hasFalsyValue(load_values)) {
+  if (!ds.hasFalsyValue(load_values)) {
     post_load(...load_values).then((key) => {
       // get the truck that was just created
       ds.getEntityByID(LOAD, key.id).then((load) => {
