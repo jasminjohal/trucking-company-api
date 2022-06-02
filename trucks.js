@@ -69,8 +69,8 @@ function get_truck_loads(req, id) {
       .get(key)
       .then((trucks) => {
         const truck = trucks[0];
-        const load_keys = truck.loads.map((lid) => {
-          return datastore.key([LOAD, parseInt(lid, 10)]);
+        const load_keys = truck.loads.map((load_id) => {
+          return datastore.key([LOAD, parseInt(load_id, 10)]);
         });
         return datastore.get(load_keys);
       })
@@ -107,22 +107,22 @@ function delete_truck(id) {
   return datastore.delete(key);
 }
 
-function put_loading(bid, lid) {
-  const l_key = datastore.key([TRUCK, parseInt(bid, 10)]);
+function put_loading(truck_id, load_id) {
+  const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
   return datastore.get(l_key).then((truck) => {
     if (typeof truck[0].loads === "undefined") {
       truck[0].loads = [];
     }
-    truck[0].loads.push(lid);
+    truck[0].loads.push(load_id);
     return datastore.save({ key: l_key, data: truck[0] });
   });
 }
 
 // remove a load id from a truck's list of loads
-function patch_truck(bid, lid) {
-  const l_key = datastore.key([TRUCK, parseInt(bid, 10)]);
+function patch_truck(truck_id, load_id) {
+  const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
   return datastore.get(l_key).then((truck) => {
-    truck[0].loads = truck[0].loads.filter((load) => load != lid);
+    truck[0].loads = truck[0].loads.filter((load) => load != load_id);
     return datastore.save({ key: l_key, data: truck[0] });
   });
 }
@@ -155,14 +155,13 @@ function add_self_links(req, trucks) {
 }
 
 // update 'carrier' property of a load entity
-// set 'carrier' to null if bid is null or
-// set 'carrier' to obj containing bid & truck name if not null
-function patch_load(lid, bid, truck_name = null) {
-  const key = datastore.key([LOAD, parseInt(lid, 10)]);
-  return get_item_by_id(LOAD, lid).then((load) => {
-    if (bid !== null) {
-      // TODO: ADD NAME
-      carrier = { id: bid, name: truck_name };
+// set 'carrier' to null if truck_id is null or
+// set 'carrier' to obj containing truck_id & truck name if not null
+function patch_load(load_id, truck_id, truck_name = null) {
+  const key = datastore.key([LOAD, parseInt(load_id, 10)]);
+  return get_item_by_id(LOAD, load_id).then((load) => {
+    if (truck_id !== null) {
+      carrier = { id: truck_id, name: truck_name };
     } else {
       carrier = null;
     }
@@ -272,9 +271,9 @@ router.put("/:id", function (req, res) {
   );
 });
 
-router.put("/:bid/loads/:lid", function (req, res) {
-  const truck_id = req.params.bid;
-  const load_id = req.params.lid;
+router.put("/:truck_id/loads/:load_id", function (req, res) {
+  const truck_id = req.params.truck_id;
+  const load_id = req.params.load_id;
 
   // check if truck id exists in database
   get_item_by_id(TRUCK, truck_id).then((truck) => {
@@ -310,11 +309,11 @@ router.put("/:bid/loads/:lid", function (req, res) {
   });
 });
 
-router.delete("/:bid/loads/:lid", function (req, res) {
+router.delete("/:truck_id/loads/:load_id", function (req, res) {
   const error_msg_404 =
     "No truck with this truck_id is loaded with the load with this load_id";
-  const truck_id = req.params.bid;
-  const load_id = req.params.lid;
+  const truck_id = req.params.truck_id;
+  const load_id = req.params.load_id;
 
   // check if truck id exists in database
   get_item_by_id(TRUCK, truck_id).then((truck) => {
@@ -337,7 +336,7 @@ router.delete("/:bid/loads/:lid", function (req, res) {
             load[0].carrier.id === truck_id
           ) {
             // remove load from truck's 'loads' property
-            patch_truck(req.params.bid, req.params.lid).then(
+            patch_truck(truck_id, load_id).then(
               // nullify this load's 'carrier' property
               patch_load(load_id, null).then(res.status(204).end())
             );
