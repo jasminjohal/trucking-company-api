@@ -11,16 +11,34 @@ const LOAD = "Load";
 router.use(bodyParser.json());
 
 /* ------------- Begin Truck Model Functions ------------- */
-function post_truck(name, type, length) {
+
+// add a new truck entity
+function post_truck(
+  company_id,
+  truck_vin,
+  trailer_vin,
+  truck_model,
+  trailer_type,
+  trailer_capacity
+) {
   var key = datastore.key(TRUCK);
-  const new_truck = { name: name, type: type, length: length, loads: [] };
+  const new_truck = {
+    company_id: company_id,
+    truck_vin: truck_vin,
+    trailer_vin: trailer_vin,
+    truck_model: truck_model,
+    trailer_type: trailer_type,
+    trailer_capacity: trailer_capacity,
+    loads: [],
+  };
   return datastore.save({ key: key, data: new_truck }).then(() => {
     return key;
   });
 }
 
 function get_trucks(req) {
-  var q = datastore.createQuery(TRUCK).limit(3);
+  // only display max 5 trucks at at ime
+  var q = datastore.createQuery(TRUCK).limit(5);
   const results = {};
   if (Object.keys(req.query).includes("cursor")) {
     q = q.start(req.query.cursor);
@@ -28,6 +46,7 @@ function get_trucks(req) {
 
   return datastore.runQuery(q).then((entities) => {
     const rows = entities[0].map(ds.fromDatastore);
+    console.log(rows.length); // TODO: add length property
     // modify output so that it includes self link
     results.trucks = rows.map((row) => {
       return {
@@ -237,17 +256,37 @@ router.get("/:id/loads", function (req, res) {
 });
 
 router.post("/", function (req, res) {
-  const name = req.body.name;
-  const type = req.body.type;
-  const length = req.body.length;
+  const company_id = req.body.company_id;
+  const truck_vin = req.body.truck_vin;
+  const trailer_vin = req.body.trailer_vin;
+  const truck_model = req.body.truck_model;
+  const trailer_type = req.body.trailer_type;
+  const trailer_capacity = req.body.trailer_capacity;
 
-  // ensure body includes all 3 required attributes
-  if (name && type && length) {
-    post_truck(name, type, length).then((key) => {
+  // ensure body includes all required attributes
+  if (
+    company_id &&
+    truck_vin &&
+    trailer_vin &&
+    truck_model &&
+    trailer_type &&
+    trailer_capacity
+  ) {
+    post_truck(
+      company_id,
+      truck_vin,
+      trailer_vin,
+      truck_model,
+      trailer_type,
+      trailer_capacity
+    ).then((key) => {
       const new_truck = {
-        name: name,
-        type: type,
-        length: length,
+        company_id: company_id,
+        truck_vin: truck_vin,
+        trailer_vin: trailer_vin,
+        truck_model: truck_model,
+        trailer_type: trailer_type,
+        trailer_capacity: trailer_capacity,
         loads: [],
         id: key.id,
       };
