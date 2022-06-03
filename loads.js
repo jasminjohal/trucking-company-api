@@ -77,6 +77,13 @@ router.get("/", function (req, res) {
 });
 
 router.get("/:id", function (req, res) {
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
+  }
+
   ds.getEntityByID(LOAD, req.params.id).then((load) => {
     if (load[0] === undefined || load[0] === null) {
       res.status(404).json({ Error: "No load with this load_id exists" });
@@ -85,8 +92,8 @@ router.get("/:id", function (req, res) {
       if (carrier) {
         // modify output so that it includes self link for carrier
         carrier = {
-          ...carrier,
-          self: `${req.protocol}://${req.get("host")}/trucks/${carrier.id}`,
+          id: carrier,
+          self: `${req.protocol}://${req.get("host")}/trucks/${carrier}`,
         };
       }
 

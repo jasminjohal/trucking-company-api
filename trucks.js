@@ -114,7 +114,7 @@ function delete_truck(id) {
   return datastore.delete(key);
 }
 
-function put_loading(truck_id, load_id) {
+function patch_truck_add_load(truck_id, load_id) {
   const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
   return datastore.get(l_key).then((truck) => {
     if (typeof truck[0].loads === "undefined") {
@@ -126,7 +126,7 @@ function put_loading(truck_id, load_id) {
 }
 
 // remove a load id from a truck's list of loads
-function patch_truck(truck_id, load_id) {
+function patch_truck_remove_load(truck_id, load_id) {
   const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
   return datastore.get(l_key).then((truck) => {
     truck[0].loads = truck[0].loads.filter((load) => load != load_id);
@@ -168,23 +168,20 @@ function add_self_links(req, trucks) {
 // update 'carrier' property of a load entity
 // set 'carrier' to null if truck_id is null or
 // set 'carrier' to obj containing truck_id & truck name if not null
-function patch_load(load_id, truck_id, truck_name = null) {
+function patch_load_modify_carrier(load_id, truck_id) {
   const key = datastore.key([LOAD, parseInt(load_id, 10)]);
   return ds.getEntityByID(LOAD, load_id).then((load) => {
-    if (truck_id !== null) {
-      carrier = { id: truck_id, name: truck_name };
-    } else {
-      carrier = null;
-    }
+    carrier = truck_id;
 
-    const modified_load = {
-      volume: load[0].volume,
+    const patched_load = {
+      vendor: load[0].vendor,
       item: load[0].item,
-      creation_date: load[0].creation_date,
-      carrier: carrier,
+      quantity: load[0].quantity,
+      weight: load[0].weight,
+      carrier,
     };
 
-    return datastore.save({ key: key, data: modified_load });
+    return datastore.save({ key: key, data: patched_load });
   });
 }
 
@@ -329,9 +326,9 @@ router.put("/:truck_id/loads/:load_id", function (req, res) {
           // check if load hasn't already been assigned to a truck
           if (!truck[0].loads.includes(load_id) && load[0].carrier === null) {
             // update truck's list of loads to include this load
-            put_loading(truck_id, load_id).then(() => {
+            patch_truck_add_load(truck_id, load_id).then(() => {
               // update load's 'carrier' property to this truck
-              patch_load(load_id, truck_id, truck[0].name).then(
+              patch_load_modify_carrier(load_id, truck_id).then(
                 res.status(204).end()
               );
             });
@@ -370,12 +367,14 @@ router.delete("/:truck_id/loads/:load_id", function (req, res) {
           if (
             truck[0].loads.includes(load_id) &&
             load[0] !== null &&
-            load[0].carrier.id === truck_id
+            load[0].carrier === truck_id
           ) {
             // remove load from truck's 'loads' property
-            patch_truck(truck_id, load_id).then(
+            patch_truck_remove_load(truck_id, load_id).then(
               // nullify this load's 'carrier' property
-              patch_load(load_id, null).then(res.status(204).end())
+              patch_load_modify_carrier(load_id, null).then(
+                res.status(204).end()
+              )
             );
           } else {
             res.status(404).json({

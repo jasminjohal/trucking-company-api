@@ -57,12 +57,13 @@ function getFiveEntities(kind, req, num_entities, endpoint) {
     } else if (endpoint === "loads") {
       results.data = rows.map((row) => {
         if (row.carrier) {
+          console.log(row.carrier);
           return {
             ...row,
             carrier: {
-              ...row.carrier,
+              id: row.carrier,
               self: `${req.protocol}://${req.get("host")}/trucks/${
-                row.carrier.id
+                row.carrier
               }`,
             },
             self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,

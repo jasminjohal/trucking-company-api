@@ -1,9 +1,51 @@
 {
-  "id": "6195449035751424",
-  "item": "Organic strawberries",
-  "quantity": 240,
-  "vendor": "Driscoll's",
-  "weight": 2160,
-  "carrier": null,
-  "self": "http://127.0.0.1:8080/loads/6195449035751424"
+  "total_entities": 6,
+  "data": [
+    {
+      "carrier": null,
+      "quantity": 432,
+      "item": "Raspberries",
+      "vendor": "Driscoll's",
+      "weight": 2462.4,
+      "id": "4870064809443328",
+      "self": "http://127.0.0.1:8080/loads/4870064809443328"
+    },
+    {
+      "weight": 2160,
+      "carrier": null,
+      "vendor": "Driscoll's",
+      "quantity": 240,
+      "item": "Organic strawberries",
+      "id": "5110132711096320",
+      "self": "http://127.0.0.1:8080/loads/5110132711096320"
+    },
+    {
+      "weight": 880,
+      "item": "Avocados",
+      "vendor": "Taylor Farms",
+      "carrier": null,
+      "quantity": 160,
+      "id": "5116145900191744",
+      "self": "http://127.0.0.1:8080/loads/5116145900191744"
+    },
+    {
+      "carrier": null,
+      "quantity": 288,
+      "item": "Blueberries",
+      "vendor": "Driscoll's",
+      "weight": 1454,
+      "id": "5679095853613056",
+      "self": "http://127.0.0.1:8080/loads/5679095853613056"
+    },
+    {
+      "vendor": "Driscoll's",
+      "quantity": 360,
+      "item": "Chocolate caramel apples",
+      "weight": 3960,
+      "carrier": null,
+      "id": "5716561121771520",
+      "self": "http://127.0.0.1:8080/loads/5716561121771520"
+    }
+  ],
+  "next": "http://127.0.0.1:8080/loads?cursor=Ci8SKWoUenV3fnBvcnRmb2xpby1qb2hhbGpyEQsSBExvYWQYgICA2OnlkwoMGAAgAA=="
 }
