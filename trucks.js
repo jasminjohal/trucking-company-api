@@ -58,15 +58,6 @@ function patch_truck_add_load(truck_id, load_id) {
   });
 }
 
-// remove a load id from a truck's list of loads
-function patch_truck_remove_load(truck_id, load_id) {
-  const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
-  return datastore.get(l_key).then((truck) => {
-    truck[0].loads = truck[0].loads.filter((load) => load != load_id);
-    return datastore.save({ key: l_key, data: truck[0] });
-  });
-}
-
 // returns a modified version of a list of trucks
 // that includes self links for each truck and for each
 // load in a truck
@@ -104,14 +95,12 @@ function add_self_links(req, trucks) {
 function patch_load_modify_carrier(load_id, truck_id) {
   const key = datastore.key([LOAD, parseInt(load_id, 10)]);
   return ds.getEntityByID(LOAD, load_id).then((load) => {
-    carrier = truck_id;
-
     const patched_load = {
       vendor: load[0].vendor,
       item: load[0].item,
       quantity: load[0].quantity,
       weight: load[0].weight,
-      carrier,
+      carrier: truck_id,
     };
 
     return datastore.save({ key: key, data: patched_load });
@@ -279,7 +268,7 @@ router.delete("/:truck_id/loads/:load_id", function (req, res) {
             load[0].carrier === truck_id
           ) {
             // remove load from truck's 'loads' property
-            patch_truck_remove_load(truck_id, load_id).then(
+            ds.removeLoadFromTruck(truck_id, load_id).then(
               // nullify this load's 'carrier' property
               patch_load_modify_carrier(load_id, null).then(
                 res.status(204).end()
@@ -310,7 +299,7 @@ router.delete("/:id", function (req, res) {
       let promises = [];
       for (let i = 0; i < truck[0].loads.length; i++) {
         let cur_load = truck[0].loads[i];
-        promises.push(patch_load(cur_load, null));
+        promises.push(patch_load_modify_carrier(cur_load, null));
       }
 
       Promise.all(promises).then(() => {

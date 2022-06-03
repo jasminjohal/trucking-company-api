@@ -1,4 +1,5 @@
 const { Datastore } = require("@google-cloud/datastore");
+const TRUCK = "Truck";
 
 const datastore = new Datastore();
 const fromDatastore = function (item) {
@@ -90,6 +91,15 @@ function getFiveEntities(kind, req, num_entities, endpoint) {
   });
 }
 
+// remove a load id from a truck's list of loads
+function removeLoadFromTruck(truck_id, load_id) {
+  const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
+  return datastore.get(l_key).then((truck) => {
+    truck[0].loads = truck[0].loads.filter((load) => load != load_id);
+    return datastore.save({ key: l_key, data: truck[0] });
+  });
+}
+
 module.exports.Datastore = Datastore;
 module.exports.datastore = datastore;
 module.exports.fromDatastore = fromDatastore;
@@ -97,3 +107,4 @@ module.exports.getEntityByID = getEntityByID;
 module.exports.getEntitiesInKind = getEntitiesInKind;
 module.exports.hasFalsyValue = hasFalsyValue;
 module.exports.getFiveEntities = getFiveEntities;
+module.exports.removeLoadFromTruck = removeLoadFromTruck;

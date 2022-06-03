@@ -46,15 +46,6 @@ function delete_load(id) {
   return datastore.delete(key);
 }
 
-// remove a load id from a truck's list of loads
-function patch_truck(bid, lid) {
-  const l_key = datastore.key([TRUCK, parseInt(bid, 10)]);
-  return datastore.get(l_key).then((truck) => {
-    truck[0].loads = truck[0].loads.filter((load) => load != lid);
-    return datastore.save({ key: l_key, data: truck[0] });
-  });
-}
-
 /* ------------- End Model Functions ------------- */
 
 /* ------------- Begin Controller Functions ------------- */
@@ -163,17 +154,12 @@ router.delete("/:id", function (req, res) {
         Error: "No load with this load_id exists",
       });
     } else {
-      let truck_id;
-      // check if load is on a truck
-      if (load[0].carrier) {
-        truck_id = load[0].carrier.id;
-      }
-
       delete_load(id)
         .then(() => {
-          // remove load from truck's list of loads
+          // remove load from truck's list of loads if applicable
+          const truck_id = load[0].carrier;
           if (truck_id) {
-            patch_truck(truck_id, id);
+            ds.removeLoadFromTruck(truck_id, id);
           }
         })
         .finally(res.status(204).end());
