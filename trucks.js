@@ -36,73 +36,6 @@ function post_truck(
   });
 }
 
-// function get_five_trucks(req, total_trucks) {
-//   // only display max 5 trucks at at ime
-//   var q = datastore.createQuery(TRUCK).limit(5);
-//   const results = {};
-//   if (Object.keys(req.query).includes("cursor")) {
-//     q = q.start(req.query.cursor);
-//   }
-
-//   return datastore.runQuery(q).then((entities) => {
-//     const rows = entities[0].map(ds.fromDatastore);
-//     // modify output so that it includes total number of entities in kind & self link for each truck
-//     results.total_entities = total_trucks;
-//     results.trucks = rows.map((row) => {
-//       return {
-//         ...row,
-//         self: `${req.protocol}://${req.get("host")}/trucks/${row.id}`,
-//       };
-//     });
-
-//     if (entities[1].moreResults !== ds.Datastore.NO_MORE_RESULTS) {
-//       results.next =
-//         req.protocol +
-//         "://" +
-//         req.get("host") +
-//         req.baseUrl +
-//         "?cursor=" +
-//         entities[1].endCursor;
-//     }
-//     return results;
-//   });
-// }
-
-// function get_truck_loads(req, id) {
-//   const key = datastore.key([TRUCK, parseInt(id, 10)]);
-
-//   return (
-//     datastore
-//       .get(key)
-//       .then((trucks) => {
-//         const truck = trucks[0];
-//         const load_keys = truck.loads.map((load_id) => {
-//           return datastore.key([LOAD, parseInt(load_id, 10)]);
-//         });
-//         return datastore.get(load_keys);
-//       })
-//       .then((loads) => {
-//         loads = loads[0].map(ds.fromDatastore);
-//         return loads.map((load) => {
-//           // modify output so that each carrier contains a self link
-//           return {
-//             ...load,
-//             carrier: {
-//               ...load.carrier,
-//               self: `${req.protocol}://${req.get("host")}/trucks/${
-//                 load.carrier.id
-//               }`,
-//             },
-//           };
-//         });
-//       })
-//       // handle case where there are no loads
-//       .catch(() => {
-//         return [];
-//       })
-//   );
-// }
-
 function put_truck(id, name, type, length) {
   const key = datastore.key([TRUCK, parseInt(id, 10)]);
   const truck = { name: name, type: type, length: length };
@@ -236,30 +169,6 @@ router.get("/:id", function (req, res) {
     }
   });
 });
-
-// router.get("/:id/loads", function (req, res) {
-//   const id = req.params.id;
-
-//   // check if truck id exists in database
-//   ds.getEntityByID(TRUCK, id).then((truck) => {
-//     if (truck[0] === undefined || truck[0] === null) {
-//       res.status(404).json({
-//         Error: "No truck with this truck_id exists",
-//       });
-//     } else {
-//       get_truck_loads(req, id).then((loads) => {
-//         // modify output so that it includes self link for each load
-//         let modified_loads = loads.map((load) => {
-//           return {
-//             ...load,
-//             self: `${req.protocol}://${req.get("host")}/loads/${load.id}`,
-//           };
-//         });
-//         res.status(200).json({ loads: modified_loads });
-//       });
-//     }
-//   });
-// });
 
 router.post("/", function (req, res) {
   // reject requests that aren't JSON
