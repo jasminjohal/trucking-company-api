@@ -9,6 +9,15 @@ const TRUCK = "Truck";
 const LOAD = "Load";
 
 router.use(bodyParser.json());
+router.use(ds.checkJwt);
+// error handler to catch missing or invalid JWT
+router.use(function (err, req, res, next) {
+  if (err.name === "UnauthorizedError") {
+    res.status(401).json({ Error: "Invalid token." });
+  } else {
+    next(err);
+  }
+});
 
 /* ------------- Begin Truck Model Functions ------------- */
 
@@ -161,12 +170,7 @@ function removeCarrierForMultipleLoads(truck) {
 
 /* ------------- Begin Controller Functions ------------- */
 
-router.get("/", ds.checkJwt, function (req, res) {
-  // reject requests with missing/invalid JWT
-  if (!req.auth.admin) {
-    return res.status(401).json({ Error: "Invalid token." });
-  }
-
+router.get("/", function (req, res) {
   const accepts = req.accepts(["application/json"]);
   if (!accepts) {
     return res.status(406).json({
@@ -218,12 +222,7 @@ router.get("/:id", function (req, res) {
   });
 });
 
-router.post("/", ds.checkJwt, function (req, res) {
-  // reject requests with missing/invalid JWT
-  if (!req.auth.admin) {
-    return res.status(401).json({ Error: "Invalid token." });
-  }
-
+router.post("/", function (req, res) {
   // reject requests that aren't JSON
   if (req.get("content-type") !== "application/json") {
     return res

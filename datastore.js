@@ -138,7 +138,7 @@ const checkJwt = jwt({
   // Validate the audience and the issuer.
   issuer: `https://${process.env.DOMAIN}/`,
   algorithms: ["RS256"],
-  credentialsRequired: false,
+  // credentialsRequired: false,
 });
 
 module.exports.Datastore = Datastore;
