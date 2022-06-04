@@ -200,25 +200,32 @@ router.get("/:id", function (req, res) {
 
   ds.getEntityByID(TRUCK, req.params.id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
-      res.status(404).json({ Error: "No truck with this truck_id exists" });
-    } else {
-      // modify output of loads so that they include self links
-      let transformed_loads = [];
-      for (let i = 0; i < truck[0].loads.length; i++) {
-        let cur_load = truck[0].loads[i];
-        transformed_loads.push({
-          id: cur_load,
-          self: `${req.protocol}://${req.get("host")}/loads/${cur_load}`,
-        });
-      }
+      return res
+        .status(404)
+        .json({ Error: "No truck with this truck_id exists" });
+    }
 
-      // modify output so that it includes self link for truck
-      res.status(200).json({
-        ...truck[0],
-        loads: transformed_loads,
-        self: `${req.protocol}://${req.get("host")}/trucks/${truck[0].id}`,
+    if (truck[0].owner !== req.auth.name) {
+      return res
+        .status(403)
+        .json({ Error: "You do not have access to this truck" });
+    }
+    // modify output of loads so that they include self links
+    let transformed_loads = [];
+    for (let i = 0; i < truck[0].loads.length; i++) {
+      let cur_load = truck[0].loads[i];
+      transformed_loads.push({
+        id: cur_load,
+        self: `${req.protocol}://${req.get("host")}/loads/${cur_load}`,
       });
     }
+
+    // modify output so that it includes self link for truck
+    res.status(200).json({
+      ...truck[0],
+      loads: transformed_loads,
+      self: `${req.protocol}://${req.get("host")}/trucks/${truck[0].id}`,
+    });
   });
 });
 
@@ -279,37 +286,44 @@ router.put("/:id", function (req, res) {
 
   ds.getEntityByID(TRUCK, truck_id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
-      res.status(404).json({ Error: "No truck with this truck_id exists" });
-    } else {
-      // ignore any extraneous attributes by only extracting relevant values from request
-      const truck_values = [
-        req.body.owner,
-        req.body.truck_vin,
-        req.body.trailer_vin,
-        req.body.truck_model,
-        req.body.trailer_type,
-        req.body.trailer_capacity,
-      ];
+      return res
+        .status(404)
+        .json({ Error: "No truck with this truck_id exists" });
+    }
 
-      // ensure all required attributes are included in the request
-      if (!ds.hasFalsyValue(truck_values)) {
-        removeCarrierForMultipleLoads(truck[0]);
-        put_truck(truck_id, ...truck_values).then(() => {
-          // get the truck that was just modified
-          ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-            res.status(200).send({
-              ...truck[0],
-              // modify reponse to include self link for truck
-              self: `${req.protocol}://${req.get("host")}/trucks/${truck_id}`,
-            });
+    if (truck[0].owner !== req.auth.name) {
+      return res
+        .status(403)
+        .json({ Error: "You do not have access to this truck" });
+    }
+    // ignore any extraneous attributes by only extracting relevant values from request
+    const truck_values = [
+      req.auth.name,
+      req.body.truck_vin,
+      req.body.trailer_vin,
+      req.body.truck_model,
+      req.body.trailer_type,
+      req.body.trailer_capacity,
+    ];
+
+    // ensure all required attributes are included in the request
+    if (!ds.hasFalsyValue(truck_values)) {
+      removeCarrierForMultipleLoads(truck[0]);
+      put_truck(truck_id, ...truck_values).then(() => {
+        // get the truck that was just modified
+        ds.getEntityByID(TRUCK, truck_id).then((truck) => {
+          res.status(200).send({
+            ...truck[0],
+            // modify reponse to include self link for truck
+            self: `${req.protocol}://${req.get("host")}/trucks/${truck_id}`,
           });
         });
-      } else {
-        res.status(400).json({
-          Error:
-            "The request object is missing at least one of the required attributes",
-        });
-      }
+      });
+    } else {
+      res.status(400).json({
+        Error:
+          "The request object is missing at least one of the required attributes",
+      });
     }
   });
 });
@@ -333,36 +347,44 @@ router.patch("/:id", function (req, res) {
 
   ds.getEntityByID(TRUCK, truck_id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
-      res.status(404).json({ Error: "No truck with this truck_id exists" });
-    } else {
-      // ignore any extraneous attributes by only extracting relevant values from request
-      const truck_values = [
-        req.body.owner,
-        req.body.truck_vin,
-        req.body.trailer_vin,
-        req.body.truck_model,
-        req.body.trailer_type,
-        req.body.trailer_capacity,
-      ];
+      return res
+        .status(404)
+        .json({ Error: "No truck with this truck_id exists" });
+    }
 
-      // ensure all required attributes are included in the request
-      if (ds.hasTruthyValue(truck_values)) {
-        patch_truck(truck_id, ...truck_values).then(() => {
-          // get the truck that was just modified
-          ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-            res.status(200).send({
-              ...truck[0],
-              // modify reponse to include self link for truck
-              self: `${req.protocol}://${req.get("host")}/trucks/${truck_id}`,
-            });
+    if (truck[0].owner !== req.auth.name) {
+      return res
+        .status(403)
+        .json({ Error: "You do not have access to this truck" });
+    }
+
+    // ignore any extraneous attributes by only extracting relevant values from request
+    const truck_values = [
+      req.body.owner,
+      req.body.truck_vin,
+      req.body.trailer_vin,
+      req.body.truck_model,
+      req.body.trailer_type,
+      req.body.trailer_capacity,
+    ];
+
+    // ensure all required attributes are included in the request
+    if (ds.hasTruthyValue(truck_values)) {
+      patch_truck(truck_id, ...truck_values).then(() => {
+        // get the truck that was just modified
+        ds.getEntityByID(TRUCK, truck_id).then((truck) => {
+          res.status(200).send({
+            ...truck[0],
+            // modify reponse to include self link for truck
+            self: `${req.protocol}://${req.get("host")}/trucks/${truck_id}`,
           });
         });
-      } else {
-        res.status(400).json({
-          Error:
-            "The request object is missing at least one of the required attributes",
-        });
-      }
+      });
+    } else {
+      res.status(400).json({
+        Error:
+          "The request object is missing at least one of the required attributes",
+      });
     }
   });
 });
@@ -371,37 +393,42 @@ router.put("/:truck_id/loads/:load_id", function (req, res) {
   const truck_id = req.params.truck_id;
   const load_id = req.params.load_id;
 
-  // check if truck id exists in database
   ds.getEntityByID(TRUCK, truck_id).then((truck) => {
+    // check if truck id exists in database
     if (truck[0] === undefined || truck[0] === null) {
-      res
+      return res
         .status(404)
         .json({ Error: "The specified truck and/or load does not exist" });
-    } else {
-      // check if load id exists in database
-      ds.getEntityByID(LOAD, load_id).then((load) => {
-        if (load[0] === undefined || load[0] === null) {
-          res
-            .status(404)
-            .json({ Error: "The specified truck and/or load does not exist" });
-        } else {
-          // check if load hasn't already been assigned to a truck
-          if (!truck[0].loads.includes(load_id) && load[0].carrier === null) {
-            // update truck's list of loads to include this load
-            patch_truck_add_load(truck_id, load_id).then(() => {
-              // update load's 'carrier' property to this truck
-              patch_load_modify_carrier(load_id, truck_id).then(
-                res.status(204).end()
-              );
-            });
-          } else {
-            res
-              .status(403)
-              .json({ Error: "The load is already loaded on another truck" });
-          }
-        }
-      });
     }
+
+    // check that user has access to truck
+    if (truck[0].owner !== req.auth.name) {
+      return res
+        .status(403)
+        .json({ Error: "You do not have access to this truck" });
+    }
+    // check if load id exists in database
+    ds.getEntityByID(LOAD, load_id).then((load) => {
+      if (load[0] === undefined || load[0] === null) {
+        return res
+          .status(404)
+          .json({ Error: "The specified truck and/or load does not exist" });
+      }
+      // check if load hasn't already been assigned to a truck
+      if (!truck[0].loads.includes(load_id) && load[0].carrier === null) {
+        // update truck's list of loads to include this load
+        patch_truck_add_load(truck_id, load_id).then(() => {
+          // update load's 'carrier' property to this truck
+          patch_load_modify_carrier(load_id, truck_id).then(
+            res.status(204).end()
+          );
+        });
+      } else {
+        res
+          .status(403)
+          .json({ Error: "The load is already loaded on another truck" });
+      }
+    });
   });
 });
 
@@ -414,38 +441,42 @@ router.delete("/:truck_id/loads/:load_id", function (req, res) {
   // check if truck id exists in database
   ds.getEntityByID(TRUCK, truck_id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
-      res.status(404).json({
+      return res.status(404).json({
         Error: error_msg_404,
       });
-    } else {
-      // check if load id exists in database
-      ds.getEntityByID(LOAD, load_id).then((load) => {
-        if (load[0] === undefined || load[0] === null) {
-          res.status(404).json({
-            Error: error_msg_404,
-          });
-        } else {
-          // check if load is actually on truck
-          if (
-            truck[0].loads.includes(load_id) &&
-            load[0] !== null &&
-            load[0].carrier === truck_id
-          ) {
-            // remove load from truck's 'loads' property
-            ds.removeLoadFromTruck(truck_id, load_id).then(
-              // nullify this load's 'carrier' property
-              patch_load_modify_carrier(load_id, null).then(
-                res.status(204).end()
-              )
-            );
-          } else {
-            res.status(404).json({
-              Error: error_msg_404,
-            });
-          }
-        }
-      });
     }
+
+    if (truck[0].owner !== req.auth.name) {
+      return res
+        .status(403)
+        .json({ Error: "You do not have access to this truck" });
+    }
+
+    // check if load id exists in database
+    ds.getEntityByID(LOAD, load_id).then((load) => {
+      if (load[0] === undefined || load[0] === null) {
+        return res.status(404).json({
+          Error: error_msg_404,
+        });
+      }
+
+      // check if load is actually on truck
+      if (
+        truck[0].loads.includes(load_id) &&
+        load[0] !== null &&
+        load[0].carrier === truck_id
+      ) {
+        // remove load from truck's 'loads' property
+        ds.removeLoadFromTruck(truck_id, load_id).then(
+          // nullify this load's 'carrier' property
+          patch_load_modify_carrier(load_id, null).then(res.status(204).end())
+        );
+      } else {
+        res.status(404).json({
+          Error: error_msg_404,
+        });
+      }
+    });
   });
 });
 
@@ -455,13 +486,18 @@ router.delete("/:id", function (req, res) {
   // check if truck id exists in database
   ds.getEntityByID(TRUCK, id).then((truck) => {
     if (truck[0] === undefined || truck[0] === null) {
-      res.status(404).json({
+      return res.status(404).json({
         Error: "No truck with this truck_id exists",
       });
-    } else {
-      removeCarrierForMultipleLoads(truck[0]);
-      delete_truck(id).then(res.status(204).end());
     }
+
+    if (truck[0].owner !== req.auth.name) {
+      return res
+        .status(403)
+        .json({ Error: "You do not have access to this truck" });
+    }
+    removeCarrierForMultipleLoads(truck[0]);
+    delete_truck(id).then(res.status(204).end());
   });
 });
 
