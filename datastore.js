@@ -36,6 +36,15 @@ const hasFalsyValue = function (arr) {
   return false;
 };
 
+const hasTruthyValue = function (arr) {
+  for (const el of arr) {
+    if (el) {
+      return true;
+    }
+  }
+  return false;
+};
+
 function getFiveEntities(kind, req, num_entities, endpoint) {
   // only display max 5 entities at a time
   var q = datastore.createQuery(kind).limit(5);
@@ -106,5 +115,6 @@ module.exports.fromDatastore = fromDatastore;
 module.exports.getEntityByID = getEntityByID;
 module.exports.getEntitiesInKind = getEntitiesInKind;
 module.exports.hasFalsyValue = hasFalsyValue;
+module.exports.hasTruthyValue = hasTruthyValue;
 module.exports.getFiveEntities = getFiveEntities;
 module.exports.removeLoadFromTruck = removeLoadFromTruck;

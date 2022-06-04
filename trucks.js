@@ -47,6 +47,7 @@ function put_truck(
 ) {
   const key = datastore.key([TRUCK, parseInt(id, 10)]);
   const truck = {
+    // TODO: SHOULD THIS IMPACT USERS TABLE
     company_id,
     truck_vin,
     trailer_vin,
@@ -56,6 +57,29 @@ function put_truck(
     loads: [],
   };
   return datastore.save({ key: key, data: truck });
+}
+
+function patch_truck(
+  id,
+  company_id = null,
+  truck_vin = null,
+  trailer_vin = null,
+  truck_model = null,
+  trailer_type = null,
+  trailer_capacity = null
+) {
+  const l_key = datastore.key([TRUCK, parseInt(id, 10)]);
+
+  return datastore.get(l_key).then((truck) => {
+    // TODO: SHOULD THIS IMPACT USERS TABLE
+    truck[0].company_id = company_id ?? truck[0].company_id;
+    truck[0].truck_vin = truck_vin ?? truck[0].truck_vin;
+    truck[0].trailer_vin = trailer_vin ?? truck[0].trailer_vin;
+    truck[0].truck_model = truck_model ?? truck[0].truck_model;
+    truck[0].trailer_type = trailer_type ?? truck[0].trailer_type;
+    truck[0].trailer_capacity = trailer_capacity ?? truck[0].trailer_capacity;
+    return datastore.save({ key: l_key, data: truck[0] });
+  });
 }
 
 function delete_truck(id) {
@@ -258,7 +282,60 @@ router.put("/:id", function (req, res) {
       if (!ds.hasFalsyValue(truck_values)) {
         removeCarrierForMultipleLoads(truck[0]);
         put_truck(truck_id, ...truck_values).then(() => {
-          // get the truck that was just created
+          // get the truck that was just modified
+          ds.getEntityByID(TRUCK, truck_id).then((truck) => {
+            res.status(200).send({
+              ...truck[0],
+              // modify reponse to include self link for truck
+              self: `${req.protocol}://${req.get("host")}/trucks/${truck_id}`,
+            });
+          });
+        });
+      } else {
+        res.status(400).json({
+          Error:
+            "The request object is missing at least one of the required attributes",
+        });
+      }
+    }
+  });
+});
+
+router.patch("/:id", function (req, res) {
+  // reject requests that aren't JSON
+  if (req.get("content-type") !== "application/json") {
+    return res
+      .status(415)
+      .json({ Error: "Server only accepts application/json data." });
+  }
+
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
+  }
+
+  const truck_id = req.params.id;
+
+  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
+    if (truck[0] === undefined || truck[0] === null) {
+      res.status(404).json({ Error: "No truck with this truck_id exists" });
+    } else {
+      // ignore any extraneous attributes by only extracting relevant values from request
+      const truck_values = [
+        req.body.company_id,
+        req.body.truck_vin,
+        req.body.trailer_vin,
+        req.body.truck_model,
+        req.body.trailer_type,
+        req.body.trailer_capacity,
+      ];
+
+      // ensure all required attributes are included in the request
+      if (ds.hasTruthyValue(truck_values)) {
+        patch_truck(truck_id, ...truck_values).then(() => {
+          // get the truck that was just modified
           ds.getEntityByID(TRUCK, truck_id).then((truck) => {
             res.status(200).send({
               ...truck[0],
