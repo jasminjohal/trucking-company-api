@@ -41,6 +41,24 @@ function put_load(id, vendor, item, quantity, weight) {
   return datastore.save({ key: key, data: load });
 }
 
+function patch_load(
+  id,
+  vendor = null,
+  item = null,
+  quantity = null,
+  weight = null
+) {
+  const l_key = datastore.key([LOAD, parseInt(id, 10)]);
+
+  return datastore.get(l_key).then((load) => {
+    load[0].vendor = vendor ?? load[0].vendor;
+    load[0].item = item ?? load[0].item;
+    load[0].quantity = quantity ?? load[0].quantity;
+    load[0].weight = weight ?? load[0].weight;
+    return datastore.save({ key: l_key, data: load[0] });
+  });
+}
+
 function delete_load(id) {
   const key = datastore.key([LOAD, parseInt(id, 10)]);
   return datastore.delete(key);
@@ -173,6 +191,59 @@ router.put("/:id", function (req, res) {
           ds.removeLoadFromTruck(truck_id, load_id);
         }
         put_load(load_id, ...load_values).then(() => {
+          // get the load that was just created
+          ds.getEntityByID(LOAD, load_id).then((load) => {
+            res.status(200).send({
+              ...load[0],
+              // modify reponse to include self link for load
+              self: `${req.protocol}://${req.get("host")}/loads/${load_id}`,
+            });
+          });
+        });
+      } else {
+        res.status(400).json({
+          Error:
+            "The request object is missing at least one of the required attributes",
+        });
+      }
+    }
+  });
+});
+
+router.patch("/:id", function (req, res) {
+  // reject requests that aren't JSON
+  if (req.get("content-type") !== "application/json") {
+    return res
+      .status(415)
+      .json({ Error: "Server only accepts application/json data." });
+  }
+
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
+  }
+
+  const load_id = req.params.id;
+
+  ds.getEntityByID(LOAD, load_id).then((load) => {
+    if (load[0] === undefined || load[0] === null) {
+      res.status(404).json({
+        Error: "No load with this load_id exists",
+      });
+    } else {
+      // ignore any extraneous attributes by only extracting relevant values from request
+      const load_values = [
+        req.body.vendor,
+        req.body.item,
+        req.body.quantity,
+        req.body.weight,
+      ];
+
+      // ensure all required attributes are included in the request
+      if (ds.hasTruthyValue(load_values)) {
+        patch_load(load_id, ...load_values).then(() => {
           // get the load that was just created
           ds.getEntityByID(LOAD, load_id).then((load) => {
             res.status(200).send({

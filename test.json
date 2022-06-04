@@ -1,6 +1,9 @@
 {
-  "item": "Blueberries",
-  "quantity": 288,
-  "vendor": "Driscoll's",
-  "weight": 1454
+  "quantity": 135,
+  "carrier": null,
+  "vendor": "Taylor Farms",
+  "item": "Kale",
+  "weight": 465.75,
+  "id": "6225742111178752",
+  "self": "http://127.0.0.1:8080/loads/6225742111178752"
 }
