@@ -14,7 +14,7 @@ router.use(bodyParser.json());
 
 // add a new truck entity
 function post_truck(
-  company_id,
+  owner,
   truck_vin,
   trailer_vin,
   truck_model,
@@ -23,7 +23,7 @@ function post_truck(
 ) {
   var key = datastore.key(TRUCK);
   const new_truck = {
-    company_id,
+    owner,
     truck_vin,
     trailer_vin,
     truck_model,
@@ -38,7 +38,7 @@ function post_truck(
 
 function put_truck(
   id,
-  company_id,
+  owner,
   truck_vin,
   trailer_vin,
   truck_model,
@@ -48,7 +48,7 @@ function put_truck(
   const key = datastore.key([TRUCK, parseInt(id, 10)]);
   const truck = {
     // TODO: SHOULD THIS IMPACT USERS TABLE
-    company_id,
+    owner,
     truck_vin,
     trailer_vin,
     truck_model,
@@ -61,7 +61,7 @@ function put_truck(
 
 function patch_truck(
   id,
-  company_id = null,
+  owner = null,
   truck_vin = null,
   trailer_vin = null,
   truck_model = null,
@@ -72,7 +72,7 @@ function patch_truck(
 
   return datastore.get(l_key).then((truck) => {
     // TODO: SHOULD THIS IMPACT USERS TABLE
-    truck[0].company_id = company_id ?? truck[0].company_id;
+    truck[0].owner = owner ?? truck[0].owner;
     truck[0].truck_vin = truck_vin ?? truck[0].truck_vin;
     truck[0].trailer_vin = trailer_vin ?? truck[0].trailer_vin;
     truck[0].truck_model = truck_model ?? truck[0].truck_model;
@@ -161,7 +161,12 @@ function removeCarrierForMultipleLoads(truck) {
 
 /* ------------- Begin Controller Functions ------------- */
 
-router.get("/", function (req, res) {
+router.get("/", ds.checkJwt, function (req, res) {
+  // reject requests with missing/invalid JWT
+  if (!req.auth.admin) {
+    return res.status(401).json({ Error: "Invalid token." });
+  }
+
   const accepts = req.accepts(["application/json"]);
   if (!accepts) {
     return res.status(406).json({
@@ -169,11 +174,15 @@ router.get("/", function (req, res) {
     });
   }
 
-  ds.getEntitiesInKind(TRUCK).then((trucks) => {
+  const owner = req.auth.name;
+
+  ds.getProtectedEntitiesInKind(TRUCK, owner).then((trucks) => {
     const num_trucks = trucks.length;
-    ds.getFiveEntities(TRUCK, req, num_trucks, "trucks").then((trucks) => {
-      res.status(200).json(add_self_links(req, trucks));
-    });
+    ds.getFiveEntities(TRUCK, req, num_trucks, "trucks", owner).then(
+      (trucks) => {
+        res.status(200).json(add_self_links(req, trucks));
+      }
+    );
   });
 });
 
@@ -209,7 +218,12 @@ router.get("/:id", function (req, res) {
   });
 });
 
-router.post("/", function (req, res) {
+router.post("/", ds.checkJwt, function (req, res) {
+  // reject requests with missing/invalid JWT
+  if (!req.auth.admin) {
+    return res.status(401).json({ Error: "Invalid token." });
+  }
+
   // reject requests that aren't JSON
   if (req.get("content-type") !== "application/json") {
     return res
@@ -219,7 +233,7 @@ router.post("/", function (req, res) {
 
   // ignore any extraneous attributes by only extracting relevant values from request
   const truck_values = [
-    req.body.company_id,
+    req.auth.name,
     req.body.truck_vin,
     req.body.trailer_vin,
     req.body.truck_model,
@@ -270,7 +284,7 @@ router.put("/:id", function (req, res) {
     } else {
       // ignore any extraneous attributes by only extracting relevant values from request
       const truck_values = [
-        req.body.company_id,
+        req.body.owner,
         req.body.truck_vin,
         req.body.trailer_vin,
         req.body.truck_model,
@@ -324,7 +338,7 @@ router.patch("/:id", function (req, res) {
     } else {
       // ignore any extraneous attributes by only extracting relevant values from request
       const truck_values = [
-        req.body.company_id,
+        req.body.owner,
         req.body.truck_vin,
         req.body.trailer_vin,
         req.body.truck_model,

@@ -1,6 +1,11 @@
 const { Datastore } = require("@google-cloud/datastore");
 const TRUCK = "Truck";
 
+const { expressjwt: jwt } = require("express-jwt");
+const jwksRsa = require("jwks-rsa");
+
+require("dotenv").config();
+
 const datastore = new Datastore();
 const fromDatastore = function (item) {
   item.id = item[Datastore.KEY].id;
@@ -27,6 +32,15 @@ const getEntitiesInKind = function (kind) {
   });
 };
 
+const getProtectedEntitiesInKind = function (kind, owner) {
+  const q = datastore.createQuery(kind);
+  return datastore.runQuery(q).then((entities) => {
+    return entities[0]
+      .map(fromDatastore)
+      .filter((item) => item.owner === owner);
+  });
+};
+
 const hasFalsyValue = function (arr) {
   for (const el of arr) {
     if (!el) {
@@ -45,7 +59,7 @@ const hasTruthyValue = function (arr) {
   return false;
 };
 
-function getFiveEntities(kind, req, num_entities, endpoint) {
+function getFiveEntities(kind, req, num_entities, endpoint, owner = null) {
   // only display max 5 entities at a time
   var q = datastore.createQuery(kind).limit(5);
   const results = {};
@@ -54,10 +68,13 @@ function getFiveEntities(kind, req, num_entities, endpoint) {
   }
 
   return datastore.runQuery(q).then((entities) => {
-    const rows = entities[0].map(fromDatastore);
     // modify output so that it includes total number of entities in kind & self link for each truck
     results.total_entities = num_entities;
+
     if (endpoint === "trucks") {
+      const rows = entities[0]
+        .map(fromDatastore)
+        .filter((item) => item.owner === owner);
       results.data = rows.map((row) => {
         return {
           ...row,
@@ -65,6 +82,7 @@ function getFiveEntities(kind, req, num_entities, endpoint) {
         };
       });
     } else if (endpoint === "loads") {
+      const rows = entities[0].map(fromDatastore);
       results.data = rows.map((row) => {
         if (row.carrier) {
           console.log(row.carrier);
@@ -109,12 +127,28 @@ function removeLoadFromTruck(truck_id, load_id) {
   });
 }
 
+const checkJwt = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `https://${process.env.DOMAIN}/.well-known/jwks.json`,
+  }),
+
+  // Validate the audience and the issuer.
+  issuer: `https://${process.env.DOMAIN}/`,
+  algorithms: ["RS256"],
+  credentialsRequired: false,
+});
+
 module.exports.Datastore = Datastore;
 module.exports.datastore = datastore;
 module.exports.fromDatastore = fromDatastore;
 module.exports.getEntityByID = getEntityByID;
 module.exports.getEntitiesInKind = getEntitiesInKind;
+module.exports.getProtectedEntitiesInKind = getProtectedEntitiesInKind;
 module.exports.hasFalsyValue = hasFalsyValue;
 module.exports.hasTruthyValue = hasTruthyValue;
 module.exports.getFiveEntities = getFiveEntities;
 module.exports.removeLoadFromTruck = removeLoadFromTruck;
+module.exports.checkJwt = checkJwt;
