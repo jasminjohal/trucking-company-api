@@ -22,13 +22,6 @@ router.use(auth(config));
 
 /* ------------- Begin Lodging Model Functions ------------- */
 
-// function get_users() {
-//   const q = datastore.createQuery(USER);
-//   return datastore.runQuery(q).then((entities) => {
-//     return entities[0].map(ds.fromDatastore);
-//   });
-// }
-
 function post_user(name, sub) {
   var key = datastore.key(USER);
   const new_user = { name: name, sub: sub };
@@ -50,7 +43,6 @@ router.get("/profile", requiresAuth(), (req, res) => {
   const idToken = req.oidc.idToken;
   const userName = req.oidc.user.name;
   const userSub = req.oidc.user.sub;
-  console.log(userSub);
 
   ds.getEntitiesInKind(USER)
     .then((users) => {
@@ -73,6 +65,13 @@ router.get("/profile", requiresAuth(), (req, res) => {
 });
 
 router.get("/users", (req, res) => {
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
+  }
+
   ds.getEntitiesInKind(USER).then((users) => {
     res.status(200).json(users);
   });

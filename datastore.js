@@ -59,6 +59,47 @@ const hasTruthyValue = function (arr) {
   return false;
 };
 
+function convertIdToObjectWithSelfLink(id, endpoint, req) {
+  return {
+    id: id,
+    self: `${req.protocol}://${req.get("host")}/${endpoint}/${id}`,
+  };
+}
+
+function addSelfLinksToLoad(load, req) {
+  const loadWithSelfLinks = {
+    ...load,
+    self: `${req.protocol}://${req.get("host")}/loads/${load.id}`,
+  };
+
+  if (load.carrier) {
+    loadWithSelfLinks.carrier = convertIdToObjectWithSelfLink(
+      load.carrier,
+      "trucks",
+      req
+    );
+  }
+
+  return loadWithSelfLinks;
+}
+
+function addSelfLinksToTruck(truck, req) {
+  const truckWithSelfLinks = {
+    ...truck,
+    self: `${req.protocol}://${req.get("host")}/trucks/${truck.id}`,
+    loads: [],
+  };
+
+  for (let j = 0; j < truck.loads.length; j++) {
+    const load_id = truck.loads[j];
+    truckWithSelfLinks.loads.push(
+      convertIdToObjectWithSelfLink(load_id, "loads", req)
+    );
+  }
+
+  return truckWithSelfLinks;
+}
+
 function getFiveEntities(kind, req, num_entities, endpoint, owner = null) {
   // only display max 5 entities at a time
   var q = datastore.createQuery(kind).limit(5);
@@ -76,32 +117,12 @@ function getFiveEntities(kind, req, num_entities, endpoint, owner = null) {
         .map(fromDatastore)
         .filter((item) => item.owner === owner);
       results.data = rows.map((row) => {
-        return {
-          ...row,
-          self: `${req.protocol}://${req.get("host")}/${endpoint}/${row.id}`,
-        };
+        return addSelfLinksToTruck(row, req);
       });
     } else if (endpoint === "loads") {
       const rows = entities[0].map(fromDatastore);
       results.data = rows.map((row) => {
-        if (row.carrier) {
-          console.log(row.carrier);
-          return {
-            ...row,
-            carrier: {
-              id: row.carrier,
-              self: `${req.protocol}://${req.get("host")}/trucks/${
-                row.carrier
-              }`,
-            },
-            self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,
-          };
-        } else {
-          return {
-            ...row,
-            self: `${req.protocol}://${req.get("host")}/loads/${row.id}`,
-          };
-        }
+        return addSelfLinksToLoad(row, req);
       });
     }
 
@@ -150,5 +171,7 @@ module.exports.getProtectedEntitiesInKind = getProtectedEntitiesInKind;
 module.exports.hasFalsyValue = hasFalsyValue;
 module.exports.hasTruthyValue = hasTruthyValue;
 module.exports.getFiveEntities = getFiveEntities;
+module.exports.addSelfLinksToLoad = addSelfLinksToLoad;
+module.exports.addSelfLinksToTruck = addSelfLinksToTruck;
 module.exports.removeLoadFromTruck = removeLoadFromTruck;
 module.exports.checkJwt = checkJwt;

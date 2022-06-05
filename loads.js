@@ -79,7 +79,6 @@ router.get("/", function (req, res) {
   ds.getEntitiesInKind(LOAD).then((loads) => {
     const num_loads = loads.length;
     ds.getFiveEntities(LOAD, req, num_loads, "loads").then((loads) => {
-      // res.status(200).json(add_self_links(req, loads));
       res.status(200).json(loads);
     });
   });
@@ -97,21 +96,8 @@ router.get("/:id", function (req, res) {
     if (load[0] === undefined || load[0] === null) {
       res.status(404).json({ Error: "No load with this load_id exists" });
     } else {
-      let carrier = load[0].carrier;
-      if (carrier) {
-        // modify output so that it includes self link for carrier
-        carrier = {
-          id: carrier,
-          self: `${req.protocol}://${req.get("host")}/trucks/${carrier}`,
-        };
-      }
-
       // modify output so that it includes self link for load
-      res.status(200).json({
-        ...load[0],
-        carrier: carrier,
-        self: `${req.protocol}://${req.get("host")}/loads/${load[0].id}`,
-      });
+      res.status(200).json(ds.addSelfLinksToLoad(load[0], req));
     }
   });
 });
@@ -122,6 +108,13 @@ router.post("/", function (req, res) {
     return res
       .status(415)
       .json({ Error: "Server only accepts application/json data." });
+  }
+
+  const accepts = req.accepts(["application/json"]);
+  if (!accepts) {
+    return res.status(406).json({
+      Error: "This application only supports JSON responses",
+    });
   }
 
   // ignore any extraneous attributes by only extracting relevant values from request
@@ -137,11 +130,7 @@ router.post("/", function (req, res) {
     post_load(...load_values).then((key) => {
       // get the truck that was just created
       ds.getEntityByID(LOAD, key.id).then((load) => {
-        res.status(201).send({
-          ...load[0],
-          // modify reponse to include self link for truck
-          self: `${req.protocol}://${req.get("host")}/loads/${key.id}`,
-        });
+        res.status(201).send(ds.addSelfLinksToLoad(load[0], req));
       });
     });
   } else {
@@ -193,11 +182,7 @@ router.put("/:id", function (req, res) {
         put_load(load_id, ...load_values).then(() => {
           // get the load that was just created
           ds.getEntityByID(LOAD, load_id).then((load) => {
-            res.status(200).send({
-              ...load[0],
-              // modify reponse to include self link for load
-              self: `${req.protocol}://${req.get("host")}/loads/${load_id}`,
-            });
+            res.status(200).send(ds.addSelfLinksToLoad(load[0], req));
           });
         });
       } else {
@@ -246,11 +231,7 @@ router.patch("/:id", function (req, res) {
         patch_load(load_id, ...load_values).then(() => {
           // get the load that was just created
           ds.getEntityByID(LOAD, load_id).then((load) => {
-            res.status(200).send({
-              ...load[0],
-              // modify reponse to include self link for load
-              self: `${req.protocol}://${req.get("host")}/loads/${load_id}`,
-            });
+            res.status(200).send(ds.addSelfLinksToLoad(load[0], req));
           });
         });
       } else {
@@ -283,6 +264,12 @@ router.delete("/:id", function (req, res) {
         })
         .finally(res.status(204).end());
     }
+  });
+});
+
+router.delete("/", function (req, res) {
+  res.status(405).json({
+    Error: "This endpoint is not supported",
   });
 });
 
