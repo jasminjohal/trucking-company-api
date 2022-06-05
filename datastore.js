@@ -32,6 +32,7 @@ const getEntitiesInKind = function (kind) {
   });
 };
 
+// returns list of entities in kind that belong to specified owner
 const getProtectedEntitiesInKind = function (kind, owner) {
   const q = datastore.createQuery(kind);
   return datastore.runQuery(q).then((entities) => {
@@ -41,6 +42,8 @@ const getProtectedEntitiesInKind = function (kind, owner) {
   });
 };
 
+// returns true is any of the values in the array are falsy;
+// returns false otherwise
 const hasFalsyValue = function (arr) {
   for (const el of arr) {
     if (!el) {
@@ -50,6 +53,8 @@ const hasFalsyValue = function (arr) {
   return false;
 };
 
+// returns true is any of the values in the array are truthy;
+// returns false otherwise
 const hasTruthyValue = function (arr) {
   for (const el of arr) {
     if (el) {
@@ -109,7 +114,6 @@ function getFiveEntities(kind, req, num_entities, endpoint, owner = null) {
   }
 
   return datastore.runQuery(q).then((entities) => {
-    // modify output so that it includes total number of entities in kind & self link for each truck
     results.total_entities = num_entities;
 
     if (endpoint === "trucks") {

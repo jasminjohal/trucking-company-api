@@ -73,7 +73,7 @@ router.get("/users", (req, res) => {
   }
 
   ds.getEntitiesInKind(USER).then((users) => {
-    res.status(200).json(users);
+    res.status(200).json({ data: users });
   });
 });
 

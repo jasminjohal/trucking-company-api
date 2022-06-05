@@ -148,12 +148,11 @@ router.get("/", function (req, res) {
   const owner = req.auth.sub;
 
   ds.getProtectedEntitiesInKind(TRUCK, owner).then((trucks) => {
-    const num_trucks = trucks.length;
-    ds.getFiveEntities(TRUCK, req, num_trucks, "trucks", owner).then(
-      (trucks) => {
-        res.status(200).json(trucks);
-      }
-    );
+    const results = {};
+    results.data = trucks.map((trucks) => {
+      return ds.addSelfLinksToTruck(trucks, req);
+    });
+    res.status(200).json(results);
   });
 });
 
