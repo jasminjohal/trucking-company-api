@@ -123,7 +123,7 @@ function patch_load_modify_carrier(load_id, truck_id) {
   });
 }
 
-function removeCarrierForMultipleLoads(truck) {
+function remove_carrier_for_multiple_loads(truck) {
   let promises = [];
   for (let i = 0; i < truck.loads.length; i++) {
     let cur_load = truck.loads[i];
@@ -257,7 +257,7 @@ router.put("/:id", function (req, res) {
 
     // ensure all required attributes are included in the request
     if (!ds.hasFalsyValue(truck_values)) {
-      removeCarrierForMultipleLoads(truck[0]);
+      remove_carrier_for_multiple_loads(truck[0]);
       put_truck(truck_id, ...truck_values).then(() => {
         // get the truck that was just modified
         ds.getEntityByID(TRUCK, truck_id).then((truck) => {
@@ -437,7 +437,7 @@ router.delete("/:id", function (req, res) {
         .status(403)
         .json({ Error: "You do not have access to this truck" });
     }
-    removeCarrierForMultipleLoads(truck[0]);
+    remove_carrier_for_multiple_loads(truck[0]);
     delete_truck(id).then(res.status(204).end());
   });
 });

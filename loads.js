@@ -3,12 +3,9 @@ const bodyParser = require("body-parser");
 const router = express.Router();
 
 const ds = require("./datastore");
-const { entity } = require("@google-cloud/datastore/build/src/entity");
-
 const datastore = ds.datastore;
 
 const LOAD = "Load";
-const TRUCK = "Truck";
 
 router.use(bodyParser.json());
 

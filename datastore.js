@@ -13,7 +13,7 @@ const fromDatastore = function (item) {
 };
 
 // returns an entity in a kind corresponding to the passed id
-const getEntityByID = function (kind, id) {
+function getEntityByID(kind, id) {
   const key = datastore.key([kind, parseInt(id, 10)]);
   return datastore.get(key).then((entity) => {
     if (entity[0] === undefined || entity[0] === null) {
@@ -22,47 +22,47 @@ const getEntityByID = function (kind, id) {
       return entity.map(fromDatastore);
     }
   });
-};
+}
 
 // returns list of entities in kind
-const getEntitiesInKind = function (kind) {
+function getEntitiesInKind(kind) {
   const q = datastore.createQuery(kind);
   return datastore.runQuery(q).then((entities) => {
     return entities[0].map(fromDatastore);
   });
-};
+}
 
 // returns list of entities in kind that belong to specified owner
-const getProtectedEntitiesInKind = function (kind, owner) {
+function getProtectedEntitiesInKind(kind, owner) {
   const q = datastore.createQuery(kind);
   return datastore.runQuery(q).then((entities) => {
     return entities[0]
       .map(fromDatastore)
       .filter((item) => item.owner === owner);
   });
-};
+}
 
 // returns true is any of the values in the array are falsy;
 // returns false otherwise
-const hasFalsyValue = function (arr) {
+function hasFalsyValue(arr) {
   for (const el of arr) {
     if (!el) {
       return true;
     }
   }
   return false;
-};
+}
 
 // returns true is any of the values in the array are truthy;
 // returns false otherwise
-const hasTruthyValue = function (arr) {
+function hasTruthyValue(arr) {
   for (const el of arr) {
     if (el) {
       return true;
     }
   }
   return false;
-};
+}
 
 function convertIdToObjectWithSelfLink(id, endpoint, req) {
   return {
@@ -163,7 +163,6 @@ const checkJwt = jwt({
   // Validate the audience and the issuer.
   issuer: `https://${process.env.DOMAIN}/`,
   algorithms: ["RS256"],
-  // credentialsRequired: false,
 });
 
 module.exports.Datastore = Datastore;
