@@ -90,13 +90,13 @@ function deleteTruck(id) {
   return datastore.delete(key);
 }
 
-function addLoadToTruck(truck_id, load_id) {
-  const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
+function addLoadToTruck(truckID, loadID) {
+  const l_key = datastore.key([TRUCK, parseInt(truckID, 10)]);
   return datastore.get(l_key).then((truck) => {
     if (typeof truck[0].loads === "undefined") {
       truck[0].loads = [];
     }
-    truck[0].loads.push(load_id);
+    truck[0].loads.push(loadID);
     return datastore.save({ key: l_key, data: truck[0] });
   });
 }
@@ -270,11 +270,11 @@ router.patch("/:id", function (req, res) {
   });
 });
 
-router.put("/:truck_id/loads/:load_id", function (req, res) {
-  const truck_id = req.params.truck_id;
-  const load_id = req.params.load_id;
+router.put("/:truckID/loads/:loadID", function (req, res) {
+  const truckID = req.params.truckID;
+  const loadID = req.params.loadID;
 
-  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
+  ds.getEntityByID(TRUCK, truckID).then((truck) => {
     if (!truck[0]) {
       return errors.displayErrorMessage(res, 404, "truck");
     }
@@ -284,28 +284,28 @@ router.put("/:truck_id/loads/:load_id", function (req, res) {
     }
 
     // check if load id exists in database
-    ds.getEntityByID(LOAD, load_id).then((load) => {
+    ds.getEntityByID(LOAD, loadID).then((load) => {
       if (!truck[0]) {
         return errors.displayErrorMessage(res, 404, "load");
       }
 
       // check if load hasn't already been assigned to a truck
-      if (truck[0].loads.includes(load_id) && load[0].carrier !== null) {
+      if (truck[0].loads.includes(loadID) && load[0].carrier !== null) {
         return errors.displayErrorMessage(res, 403, "loadAlreadyAssigned");
       }
 
       // update truck's list of loads to include this load
-      addLoadToTruck(truck_id, load_id).then(() => {
+      addLoadToTruck(truckID, loadID).then(() => {
         // update load's 'carrier' property to this truck
-        modifyLoadCarrier(load_id, truck_id).then(res.status(204).end());
+        modifyLoadCarrier(loadID, truckID).then(res.status(204).end());
       });
     });
   });
 });
 
-router.delete("/:truck_id/loads/:load_id", function (req, res) {
-  const truckID = req.params.truck_id;
-  const loadID = req.params.load_id;
+router.delete("/:truckID/loads/:loadID", function (req, res) {
+  const truckID = req.params.truckID;
+  const loadID = req.params.loadID;
 
   ds.getEntityByID(TRUCK, truckID).then((truck) => {
     if (!truck[0]) {

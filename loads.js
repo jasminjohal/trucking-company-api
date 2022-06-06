@@ -13,22 +13,21 @@ router.use(bodyParser.json());
 
 /* ------------- Begin load Model Functions ------------- */
 
-// add a new load entity
-function post_load(vendor, item, quantity, weight) {
+function postLoad(vendor, item, quantity, weight) {
   var key = datastore.key(LOAD);
-  const new_load = {
+  const load = {
     vendor,
     item,
     quantity,
     weight,
     carrier: null,
   };
-  return datastore.save({ key: key, data: new_load }).then(() => {
+  return datastore.save({ key: key, data: load }).then(() => {
     return key;
   });
 }
 
-function put_load(id, vendor, item, quantity, weight) {
+function putLoad(id, vendor, item, quantity, weight) {
   const key = datastore.key([LOAD, parseInt(id, 10)]);
   const load = {
     vendor,
@@ -40,7 +39,7 @@ function put_load(id, vendor, item, quantity, weight) {
   return datastore.save({ key: key, data: load });
 }
 
-function patch_load(
+function patchLoad(
   id,
   vendor = null,
   item = null,
@@ -58,9 +57,14 @@ function patch_load(
   });
 }
 
-function delete_load(id) {
+function deleteLoad(id) {
   const key = datastore.key([LOAD, parseInt(id, 10)]);
   return datastore.delete(key);
+}
+
+// ignore any extraneous attributes by only extracting relevant values from request
+function getLoadPropertiesFromRequest(req) {
+  return [req.body.vendor, req.body.item, req.body.quantity, req.body.weight];
 }
 
 /* ------------- End Model Functions ------------- */
@@ -73,8 +77,8 @@ router.get("/", function (req, res) {
   }
 
   ds.getEntitiesInKind(LOAD).then((loads) => {
-    const num_loads = loads.length;
-    ds.getFiveEntities(LOAD, req, num_loads, "loads").then((loads) => {
+    const numLoads = loads.length;
+    ds.getFiveEntities(LOAD, req, numLoads, "loads").then((loads) => {
       res.status(200).json(loads);
     });
   });
@@ -86,175 +90,124 @@ router.get("/:id", function (req, res) {
   }
 
   ds.getEntityByID(LOAD, req.params.id).then((load) => {
-    if (load[0] === undefined || load[0] === null) {
-      res.status(404).json({ Error: "No load with this load_id exists" });
-    } else {
-      // modify output so that it includes self link for load
-      res.status(200).json(ds.addSelfLinksToLoad(load[0], req));
+    if (!load[0]) {
+      return errors.displayErrorMessage(res, 404, "load");
     }
+
+    res.status(200).json(ds.addSelfLinksToLoad(load[0], req));
   });
 });
 
 router.post("/", function (req, res) {
-  // reject requests that aren't JSON
-  if (req.get("content-type") !== "application/json") {
-    return res
-      .status(415)
-      .json({ Error: "Server only accepts application/json data." });
+  if (!ds.hasValidContentType(req)) {
+    return errors.displayErrorMessage(res, 415);
   }
 
   if (!ds.hasJsonInAcceptHeader(req)) {
     return errors.displayErrorMessage(res, 406);
   }
 
-  // ignore any extraneous attributes by only extracting relevant values from request
-  const load_values = [
-    req.body.vendor,
-    req.body.item,
-    req.body.quantity,
-    req.body.weight,
-  ];
-
   // ensure all required attributes are included in the request
-  if (!ds.hasFalsyValue(load_values)) {
-    post_load(...load_values).then((key) => {
-      // get the truck that was just created
-      ds.getEntityByID(LOAD, key.id).then((load) => {
-        res.status(201).send(ds.addSelfLinksToLoad(load[0], req));
-      });
-    });
-  } else {
-    res.status(400).json({
-      Error:
-        "The request object is missing at least one of the required attributes",
-    });
+  const loadValues = getLoadPropertiesFromRequest(req);
+  if (ds.hasFalsyValue(loadValues)) {
+    return errors.displayErrorMessage(res, 400);
   }
+
+  postLoad(...loadValues).then((key) => {
+    const loadID = key.id;
+    ds.getEntityByID(LOAD, loadID).then((load) => {
+      res.status(201).send(ds.addSelfLinksToLoad(load[0], req));
+    });
+  });
 });
 
 router.put("/:id", function (req, res) {
-  // reject requests that aren't JSON
-  if (req.get("content-type") !== "application/json") {
-    return res
-      .status(415)
-      .json({ Error: "Server only accepts application/json data." });
+  if (!ds.hasValidContentType(req)) {
+    return errors.displayErrorMessage(res, 415);
   }
 
   if (!ds.hasJsonInAcceptHeader(req)) {
     return errors.displayErrorMessage(res, 406);
   }
 
-  const load_id = req.params.id;
-
-  ds.getEntityByID(LOAD, load_id).then((load) => {
-    if (load[0] === undefined || load[0] === null) {
-      res.status(404).json({
-        Error: "No load with this load_id exists",
-      });
-    } else {
-      // ignore any extraneous attributes by only extracting relevant values from request
-      const load_values = [
-        req.body.vendor,
-        req.body.item,
-        req.body.quantity,
-        req.body.weight,
-      ];
-
-      // ensure all required attributes are included in the request
-      if (!ds.hasFalsyValue(load_values)) {
-        // remove load from truck list of loads if applicable
-        const truck_id = load[0].carrier;
-        if (truck_id) {
-          ds.removeLoadFromTruck(truck_id, load_id);
-        }
-        put_load(load_id, ...load_values).then(() => {
-          // get the load that was just created
-          ds.getEntityByID(LOAD, load_id).then((load) => {
-            res.status(200).send(ds.addSelfLinksToLoad(load[0], req));
-          });
-        });
-      } else {
-        res.status(400).json({
-          Error:
-            "The request object is missing at least one of the required attributes",
-        });
-      }
+  const loadID = req.params.id;
+  ds.getEntityByID(LOAD, loadID).then((load) => {
+    if (!load[0]) {
+      return errors.displayErrorMessage(res, 404, "load");
     }
+
+    // ensure all required attributes are included in the request
+    const loadValues = getLoadPropertiesFromRequest(req);
+    if (ds.hasFalsyValue(loadValues)) {
+      return errors.displayErrorMessage(res, 400);
+    }
+
+    // remove load from truck list of loads if applicable
+    const truckID = load[0].carrier;
+    if (truckID) {
+      ds.removeLoadFromTruck(truckID, loadID);
+    }
+
+    putLoad(loadID, ...loadValues).then(() => {
+      ds.getEntityByID(LOAD, loadID).then((load) => {
+        res.status(200).send(ds.addSelfLinksToLoad(load[0], req));
+      });
+    });
   });
 });
 
 router.patch("/:id", function (req, res) {
-  // reject requests that aren't JSON
-  if (req.get("content-type") !== "application/json") {
-    return res
-      .status(415)
-      .json({ Error: "Server only accepts application/json data." });
+  if (!ds.hasValidContentType(req)) {
+    return errors.displayErrorMessage(res, 415);
   }
 
   if (!ds.hasJsonInAcceptHeader(req)) {
     return errors.displayErrorMessage(res, 406);
   }
 
-  const load_id = req.params.id;
-
-  ds.getEntityByID(LOAD, load_id).then((load) => {
-    if (load[0] === undefined || load[0] === null) {
-      res.status(404).json({
-        Error: "No load with this load_id exists",
-      });
-    } else {
-      // ignore any extraneous attributes by only extracting relevant values from request
-      const load_values = [
-        req.body.vendor,
-        req.body.item,
-        req.body.quantity,
-        req.body.weight,
-      ];
-
-      // ensure all required attributes are included in the request
-      if (ds.hasTruthyValue(load_values)) {
-        patch_load(load_id, ...load_values).then(() => {
-          // get the load that was just created
-          ds.getEntityByID(LOAD, load_id).then((load) => {
-            res.status(200).send(ds.addSelfLinksToLoad(load[0], req));
-          });
-        });
-      } else {
-        res.status(400).json({
-          Error:
-            "The request object is missing at least one of the required attributes",
-        });
-      }
+  const loadID = req.params.id;
+  ds.getEntityByID(LOAD, loadID).then((load) => {
+    if (!load[0]) {
+      return errors.displayErrorMessage(res, 404, "load");
     }
+
+    // ensure the request has at least one required attribute
+    const loadValues = getLoadPropertiesFromRequest(req);
+    if (!ds.hasTruthyValue(loadValues)) {
+      return errors.displayErrorMessage(res, 400);
+    }
+
+    patchLoad(loadID, ...loadValues).then(() => {
+      ds.getEntityByID(LOAD, loadID).then((load) => {
+        res.status(200).send(ds.addSelfLinksToLoad(load[0], req));
+      });
+    });
   });
 });
 
 router.delete("/:id", function (req, res) {
-  const id = req.params.id;
+  const loadID = req.params.id;
 
   // check if load id exists in database
-  ds.getEntityByID(LOAD, id).then((load) => {
-    if (load[0] === undefined || load[0] === null) {
-      res.status(404).json({
-        Error: "No load with this load_id exists",
-      });
-    } else {
-      delete_load(id)
-        .then(() => {
-          // remove load from truck's list of loads if applicable
-          const truck_id = load[0].carrier;
-          if (truck_id) {
-            ds.removeLoadFromTruck(truck_id, id);
-          }
-        })
-        .finally(res.status(204).end());
+  ds.getEntityByID(LOAD, loadID).then((load) => {
+    if (!load[0]) {
+      return errors.displayErrorMessage(res, 404, "load");
     }
+
+    deleteLoad(loadID)
+      .then(() => {
+        // remove load from truck's list of loads if applicable
+        const truckID = load[0].carrier;
+        if (truckID) {
+          ds.removeLoadFromTruck(truckID, id);
+        }
+      })
+      .finally(res.status(204).end());
   });
 });
 
 router.delete("/", function (req, res) {
-  res.status(405).json({
-    Error: "This endpoint is not supported",
-  });
+  return errors.displayErrorMessage(res, 405);
 });
 
 /* ------------- End Controller Functions ------------- */

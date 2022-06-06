@@ -27,22 +27,3 @@ function displayErrorMessage(res, statusCode, subcategory = null) {
 }
 
 module.exports.displayErrorMessage = displayErrorMessage;
-
-// if (!ds.hasValidContentType(req)) {
-//   return errors.displayErrorMessage(res, 415);
-// }
-
-// if (!ds.hasJsonInAcceptHeader(req)) {
-//   return errors.displayErrorMessage(res, 406);
-// }
-
-// if (!truck[0]) {
-//   return errors.displayErrorMessage(res, 404, "truck");
-// }
-
-// if (!ds.ownerIsValid(req, truck[0])) {
-//   return errors.displayErrorMessage(res, 403, "unauthorized");
-// }
-
-// return errors.displayErrorMessage(res, 400);
-// return errors.displayErrorMessage(res, 405);
