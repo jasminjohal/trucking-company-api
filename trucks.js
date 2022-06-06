@@ -254,10 +254,10 @@ router.patch("/:id", function (req, res) {
       return errors.displayErrorMessage(res, 403, "unauthorized");
     }
 
-    const truckValues = getTruckPropertiesFromRequest(req);
-
     // ensure at least one attribute is included in the request
-    if (!ds.hasTruthyValue(truckValues)) {
+    const truckValues = getTruckPropertiesFromRequest(req);
+    // ignore first value since it's the JWT sub
+    if (!ds.hasTruthyValue(truckValues.slice(1))) {
       return errors.displayErrorMessage(res, 400);
     }
 
@@ -283,14 +283,13 @@ router.put("/:truckID/loads/:loadID", function (req, res) {
       return errors.displayErrorMessage(res, 403, "unauthorized");
     }
 
-    // check if load id exists in database
     ds.getEntityByID(LOAD, loadID).then((load) => {
-      if (!truck[0]) {
+      if (!load[0]) {
         return errors.displayErrorMessage(res, 404, "load");
       }
 
       // check if load hasn't already been assigned to a truck
-      if (truck[0].loads.includes(loadID) && load[0].carrier !== null) {
+      if (truck[0].loads.includes(loadID) || load[0].carrier !== null) {
         return errors.displayErrorMessage(res, 403, "loadAlreadyAssigned");
       }
 
@@ -322,7 +321,7 @@ router.delete("/:truckID/loads/:loadID", function (req, res) {
       }
 
       // check if load is actually on truck
-      if (!truck[0].loads.includes(loadID) && load[0].carrier !== truckID) {
+      if (!truck[0].loads.includes(loadID) || load[0].carrier !== truckID) {
         return errors.displayErrorMessage(res, 404, "either");
       }
 

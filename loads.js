@@ -199,7 +199,7 @@ router.delete("/:id", function (req, res) {
         // remove load from truck's list of loads if applicable
         const truckID = load[0].carrier;
         if (truckID) {
-          ds.removeLoadFromTruck(truckID, id);
+          ds.removeLoadFromTruck(truckID, loadID);
         }
       })
       .finally(res.status(204).end());

@@ -21,10 +21,6 @@ function getEntityByID(kind, id) {
   });
 }
 
-// function entityExists(entity) {
-//   return entity === undefined || entity === null;
-// }
-
 // returns list of entities in kind
 function getEntitiesInKind(kind) {
   const q = datastore.createQuery(kind);
