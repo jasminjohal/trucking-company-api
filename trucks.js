@@ -153,8 +153,8 @@ router.get("/", function (req, res) {
   const owner = req.auth.sub;
   ds.getProtectedEntitiesInKind(TRUCK, owner).then((trucks) => {
     const results = {};
-    results.data = trucks.map((trucks) => {
-      return ds.addSelfLinksToTruck(trucks, req);
+    results.data = trucks.map((truck) => {
+      return ds.addSelfLinksToTruck(truck, req);
     });
     res.status(200).json(results);
   });

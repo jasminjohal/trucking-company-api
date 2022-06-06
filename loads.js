@@ -76,11 +76,12 @@ router.get("/", function (req, res) {
     return errors.displayErrorMessage(res, 406);
   }
 
-  ds.getEntitiesInKind(LOAD).then((loads) => {
-    const numLoads = loads.length;
-    ds.getFiveEntities(LOAD, req, numLoads, "loads").then((loads) => {
-      res.status(200).json(loads);
+  ds.getUnprotectedEntitiesInKind(LOAD).then((loads) => {
+    const results = {};
+    results.data = loads.map((load) => {
+      return ds.addSelfLinksToLoad(load, req);
     });
+    res.status(200).json(results);
   });
 });
 
