@@ -50,8 +50,7 @@ function hasFalsyValue(arr) {
   return false;
 }
 
-// returns true is any of the values in the array are truthy;
-// returns false otherwise
+// returns true if any of the values in the array are truthy; false otherwise
 function hasTruthyValue(arr) {
   for (const el of arr) {
     if (el) {
@@ -61,6 +60,7 @@ function hasTruthyValue(arr) {
   return false;
 }
 
+// return an object that contains the passed id and the corresponding self link
 function convertIdToObjectWithSelfLink(id, endpoint, req) {
   return {
     id: id,
@@ -68,6 +68,7 @@ function convertIdToObjectWithSelfLink(id, endpoint, req) {
   };
 }
 
+// return a modified version of the object that has self links for the load and for its carrier
 function addSelfLinksToLoad(load, req) {
   const loadWithSelfLinks = {
     ...load,
@@ -85,6 +86,7 @@ function addSelfLinksToLoad(load, req) {
   return loadWithSelfLinks;
 }
 
+// return a modified version of the object that has self links for the truck and for each of its loads
 function addSelfLinksToTruck(truck, req) {
   const truckWithSelfLinks = {
     ...truck,
@@ -93,9 +95,9 @@ function addSelfLinksToTruck(truck, req) {
   };
 
   for (let j = 0; j < truck.loads.length; j++) {
-    const load_id = truck.loads[j];
+    const loadID = truck.loads[j];
     truckWithSelfLinks.loads.push(
-      convertIdToObjectWithSelfLink(load_id, "loads", req)
+      convertIdToObjectWithSelfLink(loadID, "loads", req)
     );
   }
 
@@ -103,22 +105,25 @@ function addSelfLinksToTruck(truck, req) {
 }
 
 // remove a load id from a truck's list of loads
-function removeLoadFromTruck(truck_id, load_id) {
-  const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
+function removeLoadFromTruck(truckID, loadID) {
+  const l_key = datastore.key([TRUCK, parseInt(truckID, 10)]);
   return datastore.get(l_key).then((truck) => {
-    truck[0].loads = truck[0].loads.filter((load) => load != load_id);
+    truck[0].loads = truck[0].loads.filter((load) => load != loadID);
     return datastore.save({ key: l_key, data: truck[0] });
   });
 }
 
+// return true if the client accepts JSON responses; false otherwise
 function hasJsonInAcceptHeader(req) {
   return req.accepts(["application/json"]);
 }
 
+// return true if the response is JSON; false otherwise
 function hasValidContentType(req) {
   return req.get("content-type") === "application/json";
 }
 
+// return true if the client is authorized to view the entity
 function ownerIsValid(req, entity) {
   return entity.owner === req.auth.sub;
 }

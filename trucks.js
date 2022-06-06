@@ -17,7 +17,6 @@ router.use(mw.checkJwtError);
 
 /* ------------- Begin Truck Model Functions ------------- */
 
-// add a new truck entity
 function postTruck(
   owner,
   truck_vin,
@@ -175,7 +174,6 @@ router.get("/:id", function (req, res) {
       return errors.displayErrorMessage(res, 403, "unauthorized");
     }
 
-    // modify output so that it includes self link for truck and self links for all of its loads
     res.status(200).json(ds.addSelfLinksToTruck(truck[0], req));
   });
 });
@@ -227,7 +225,6 @@ router.put("/:id", function (req, res) {
 
     removeCarrierForMultipleLoads(truck[0]);
     putTruck(truckID, ...truckValues).then(() => {
-      // get the truck that was just modified
       ds.getEntityByID(TRUCK, truckID).then((truck) => {
         res.status(200).send(ds.addSelfLinksToTruck(truck[0], req));
       });
@@ -262,7 +259,6 @@ router.patch("/:id", function (req, res) {
     }
 
     patchTruck(truckID, ...truckValues).then(() => {
-      // get the truck that was just modified
       ds.getEntityByID(TRUCK, truckID).then((truck) => {
         res.status(200).send(ds.addSelfLinksToTruck(truck[0], req));
       });
@@ -346,6 +342,7 @@ router.delete("/:id", function (req, res) {
       return errors.displayErrorMessage(res, 403, "unauthorized");
     }
 
+    // nullify the 'carrier' property for all loads on the truck
     removeCarrierForMultipleLoads(truck[0]);
     deleteTruck(truckID).then(res.status(204).end());
   });
