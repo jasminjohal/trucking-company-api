@@ -1,7 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const router = express.Router();
+
 const ds = require("./datastore");
+const mw = require("./middleware");
+const errors = require("./errors");
 
 const datastore = ds.datastore;
 
@@ -9,20 +12,13 @@ const TRUCK = "Truck";
 const LOAD = "Load";
 
 router.use(bodyParser.json());
-router.use(ds.checkJwt);
-// error handler to catch missing or invalid JWT
-router.use(function (err, req, res, next) {
-  if (err.name === "UnauthorizedError") {
-    res.status(401).json({ Error: "Invalid token." });
-  } else {
-    next(err);
-  }
-});
+router.use(mw.checkJwt);
+router.use(mw.checkJwtError);
 
 /* ------------- Begin Truck Model Functions ------------- */
 
 // add a new truck entity
-function post_truck(
+function postTruck(
   owner,
   truck_vin,
   trailer_vin,
@@ -45,7 +41,7 @@ function post_truck(
   });
 }
 
-function put_truck(
+function putTruck(
   id,
   owner,
   truck_vin,
@@ -67,7 +63,7 @@ function put_truck(
   return datastore.save({ key: key, data: truck });
 }
 
-function patch_truck(
+function patchTruck(
   id,
   owner = null,
   truck_vin = null,
@@ -89,12 +85,12 @@ function patch_truck(
   });
 }
 
-function delete_truck(id) {
+function deleteTruck(id) {
   const key = datastore.key([TRUCK, parseInt(id, 10)]);
   return datastore.delete(key);
 }
 
-function patch_truck_add_load(truck_id, load_id) {
+function addLoadToTruck(truck_id, load_id) {
   const l_key = datastore.key([TRUCK, parseInt(truck_id, 10)]);
   return datastore.get(l_key).then((truck) => {
     if (typeof truck[0].loads === "undefined") {
@@ -106,31 +102,43 @@ function patch_truck_add_load(truck_id, load_id) {
 }
 
 // update 'carrier' property of a load entity
-// set 'carrier' to null if truck_id is null or
-// set 'carrier' to obj containing truck_id & truck name if not null
-function patch_load_modify_carrier(load_id, truck_id) {
-  const key = datastore.key([LOAD, parseInt(load_id, 10)]);
-  return ds.getEntityByID(LOAD, load_id).then((load) => {
+// set 'carrier' to either null or truckID depending on value of truckID
+function modifyLoadCarrier(loadID, truckID) {
+  const key = datastore.key([LOAD, parseInt(loadID, 10)]);
+  return ds.getEntityByID(LOAD, loadID).then((load) => {
     const patched_load = {
       vendor: load[0].vendor,
       item: load[0].item,
       quantity: load[0].quantity,
       weight: load[0].weight,
-      carrier: truck_id,
+      carrier: truckID,
     };
 
     return datastore.save({ key: key, data: patched_load });
   });
 }
 
-function remove_carrier_for_multiple_loads(truck) {
+// nullify 'carrier' property for any load on a truck
+function removeCarrierForMultipleLoads(truck) {
   let promises = [];
   for (let i = 0; i < truck.loads.length; i++) {
-    let cur_load = truck.loads[i];
-    promises.push(patch_load_modify_carrier(cur_load, null));
+    let load = truck.loads[i];
+    promises.push(modifyLoadCarrier(load, null));
   }
 
   Promise.all(promises);
+}
+
+// ignore any extraneous attributes by only extracting relevant values from request
+function getTruckPropertiesFromRequest(req) {
+  return [
+    req.auth.sub,
+    req.body.truck_vin,
+    req.body.trailer_vin,
+    req.body.truck_model,
+    req.body.trailer_type,
+    req.body.trailer_capacity,
+  ];
 }
 
 /* ------------- End Model Functions ------------- */
@@ -138,15 +146,11 @@ function remove_carrier_for_multiple_loads(truck) {
 /* ------------- Begin Controller Functions ------------- */
 
 router.get("/", function (req, res) {
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
   const owner = req.auth.sub;
-
   ds.getProtectedEntitiesInKind(TRUCK, owner).then((trucks) => {
     const results = {};
     results.data = trucks.map((trucks) => {
@@ -157,24 +161,18 @@ router.get("/", function (req, res) {
 });
 
 router.get("/:id", function (req, res) {
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
-  ds.getEntityByID(TRUCK, req.params.id).then((truck) => {
-    if (truck[0] === undefined || truck[0] === null) {
-      return res
-        .status(404)
-        .json({ Error: "No truck with this truck_id exists" });
+  const truckID = req.params.id;
+  ds.getEntityByID(TRUCK, truckID).then((truck) => {
+    if (!truck[0]) {
+      return errors.displayErrorMessage(res, 404, "truck");
     }
 
-    if (truck[0].owner !== req.auth.sub) {
-      return res
-        .status(403)
-        .json({ Error: "You do not have access to this truck" });
+    if (!ds.ownerIsValid(req, truck[0])) {
+      return errors.displayErrorMessage(res, 403, "unauthorized");
     }
 
     // modify output so that it includes self link for truck and self links for all of its loads
@@ -183,150 +181,92 @@ router.get("/:id", function (req, res) {
 });
 
 router.post("/", function (req, res) {
-  // reject requests that aren't JSON
-  if (req.get("content-type") !== "application/json") {
-    return res
-      .status(415)
-      .json({ Error: "Server only accepts application/json data." });
+  if (!ds.hasValidContentType(req)) {
+    return errors.displayErrorMessage(res, 415);
   }
-
-  // ignore any extraneous attributes by only extracting relevant values from request
-  const truck_values = [
-    req.auth.sub,
-    req.body.truck_vin,
-    req.body.trailer_vin,
-    req.body.truck_model,
-    req.body.trailer_type,
-    req.body.trailer_capacity,
-  ];
 
   // ensure all required attributes are included in the request
-  if (!ds.hasFalsyValue(truck_values)) {
-    post_truck(...truck_values).then((key) => {
-      // get the truck that was just created
-      ds.getEntityByID(TRUCK, key.id).then((truck) => {
-        res.status(201).send(ds.addSelfLinksToTruck(truck[0], req));
-      });
-    });
-  } else {
-    res.status(400).json({
-      Error:
-        "The request object is missing at least one of the required attributes",
-    });
+  const truckValues = getTruckPropertiesFromRequest(req);
+  if (ds.hasFalsyValue(truckValues)) {
+    return errors.displayErrorMessage(res, 400);
   }
+
+  postTruck(...truckValues).then((key) => {
+    // get the truck that was just created
+    const truckID = key.id;
+    ds.getEntityByID(TRUCK, truckID).then((truck) => {
+      res.status(201).send(ds.addSelfLinksToTruck(truck[0], req));
+    });
+  });
 });
 
 router.put("/:id", function (req, res) {
-  // reject requests that aren't JSON
-  if (req.get("content-type") !== "application/json") {
-    return res
-      .status(415)
-      .json({ Error: "Server only accepts application/json data." });
+  if (!ds.hasValidContentType(req)) {
+    return errors.displayErrorMessage(res, 415);
   }
 
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
-  const truck_id = req.params.id;
-
-  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-    if (truck[0] === undefined || truck[0] === null) {
-      return res
-        .status(404)
-        .json({ Error: "No truck with this truck_id exists" });
+  const truckID = req.params.id;
+  ds.getEntityByID(TRUCK, truckID).then((truck) => {
+    if (!truck[0]) {
+      return errors.displayErrorMessage(res, 404, "truck");
     }
 
-    if (truck[0].owner !== req.auth.sub) {
-      return res
-        .status(403)
-        .json({ Error: "You do not have access to this truck" });
+    if (!ds.ownerIsValid(req, truck[0])) {
+      return errors.displayErrorMessage(res, 403, "unauthorized");
     }
-    // ignore any extraneous attributes by only extracting relevant values from request
-    const truck_values = [
-      req.auth.sub,
-      req.body.truck_vin,
-      req.body.trailer_vin,
-      req.body.truck_model,
-      req.body.trailer_type,
-      req.body.trailer_capacity,
-    ];
 
     // ensure all required attributes are included in the request
-    if (!ds.hasFalsyValue(truck_values)) {
-      remove_carrier_for_multiple_loads(truck[0]);
-      put_truck(truck_id, ...truck_values).then(() => {
-        // get the truck that was just modified
-        ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-          res.status(200).send(ds.addSelfLinksToTruck(truck[0], req));
-        });
-      });
-    } else {
-      res.status(400).json({
-        Error:
-          "The request object is missing at least one of the required attributes",
-      });
+    const truckValues = getTruckPropertiesFromRequest(req);
+    if (ds.hasFalsyValue(truckValues)) {
+      return errors.displayErrorMessage(res, 400);
     }
+
+    removeCarrierForMultipleLoads(truck[0]);
+    putTruck(truckID, ...truckValues).then(() => {
+      // get the truck that was just modified
+      ds.getEntityByID(TRUCK, truckID).then((truck) => {
+        res.status(200).send(ds.addSelfLinksToTruck(truck[0], req));
+      });
+    });
   });
 });
 
 router.patch("/:id", function (req, res) {
-  // reject requests that aren't JSON
-  if (req.get("content-type") !== "application/json") {
-    return res
-      .status(415)
-      .json({ Error: "Server only accepts application/json data." });
+  if (!ds.hasValidContentType(req)) {
+    return errors.displayErrorMessage(res, 415);
   }
 
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
+  }
+
+  const truckID = req.params.id;
+  ds.getEntityByID(TRUCK, truckID).then((truck) => {
+    if (!truck[0]) {
+      return errors.displayErrorMessage(res, 404, "truck");
+    }
+
+    if (!ds.ownerIsValid(req, truck[0])) {
+      return errors.displayErrorMessage(res, 403, "unauthorized");
+    }
+
+    const truckValues = getTruckPropertiesFromRequest(req);
+
+    // ensure at least one attribute is included in the request
+    if (!ds.hasTruthyValue(truckValues)) {
+      return errors.displayErrorMessage(res, 400);
+    }
+
+    patchTruck(truckID, ...truckValues).then(() => {
+      // get the truck that was just modified
+      ds.getEntityByID(TRUCK, truckID).then((truck) => {
+        res.status(200).send(ds.addSelfLinksToTruck(truck[0], req));
+      });
     });
-  }
-
-  const truck_id = req.params.id;
-
-  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-    if (truck[0] === undefined || truck[0] === null) {
-      return res
-        .status(404)
-        .json({ Error: "No truck with this truck_id exists" });
-    }
-
-    if (truck[0].owner !== req.auth.sub) {
-      return res
-        .status(403)
-        .json({ Error: "You do not have access to this truck" });
-    }
-
-    // ignore any extraneous attributes by only extracting relevant values from request
-    const truck_values = [
-      req.body.owner,
-      req.body.truck_vin,
-      req.body.trailer_vin,
-      req.body.truck_model,
-      req.body.trailer_type,
-      req.body.trailer_capacity,
-    ];
-
-    // ensure all required attributes are included in the request
-    if (ds.hasTruthyValue(truck_values)) {
-      patch_truck(truck_id, ...truck_values).then(() => {
-        // get the truck that was just modified
-        ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-          res.status(200).send(ds.addSelfLinksToTruck(truck[0], req));
-        });
-      });
-    } else {
-      res.status(400).json({
-        Error:
-          "The request object is missing at least one of the required attributes",
-      });
-    }
   });
 });
 
@@ -335,117 +275,85 @@ router.put("/:truck_id/loads/:load_id", function (req, res) {
   const load_id = req.params.load_id;
 
   ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-    // check if truck id exists in database
-    if (truck[0] === undefined || truck[0] === null) {
-      return res
-        .status(404)
-        .json({ Error: "The specified truck and/or load does not exist" });
+    if (!truck[0]) {
+      return errors.displayErrorMessage(res, 404, "truck");
     }
 
-    // check that user has access to truck
-    if (truck[0].owner !== req.auth.sub) {
-      return res
-        .status(403)
-        .json({ Error: "You do not have access to this truck" });
+    if (!ds.ownerIsValid(req, truck[0])) {
+      return errors.displayErrorMessage(res, 403, "unauthorized");
     }
+
     // check if load id exists in database
     ds.getEntityByID(LOAD, load_id).then((load) => {
-      if (load[0] === undefined || load[0] === null) {
-        return res
-          .status(404)
-          .json({ Error: "The specified truck and/or load does not exist" });
+      if (!truck[0]) {
+        return errors.displayErrorMessage(res, 404, "load");
       }
+
       // check if load hasn't already been assigned to a truck
-      if (!truck[0].loads.includes(load_id) && load[0].carrier === null) {
-        // update truck's list of loads to include this load
-        patch_truck_add_load(truck_id, load_id).then(() => {
-          // update load's 'carrier' property to this truck
-          patch_load_modify_carrier(load_id, truck_id).then(
-            res.status(204).end()
-          );
-        });
-      } else {
-        res
-          .status(403)
-          .json({ Error: "The load is already loaded on another truck" });
+      if (truck[0].loads.includes(load_id) && load[0].carrier !== null) {
+        return errors.displayErrorMessage(res, 403, "loadAlreadyAssigned");
       }
+
+      // update truck's list of loads to include this load
+      addLoadToTruck(truck_id, load_id).then(() => {
+        // update load's 'carrier' property to this truck
+        modifyLoadCarrier(load_id, truck_id).then(res.status(204).end());
+      });
     });
   });
 });
 
 router.delete("/:truck_id/loads/:load_id", function (req, res) {
-  const error_msg_404 =
-    "No truck with this truck_id is loaded with the load with this load_id";
-  const truck_id = req.params.truck_id;
-  const load_id = req.params.load_id;
+  const truckID = req.params.truck_id;
+  const loadID = req.params.load_id;
 
-  // check if truck id exists in database
-  ds.getEntityByID(TRUCK, truck_id).then((truck) => {
-    if (truck[0] === undefined || truck[0] === null) {
-      return res.status(404).json({
-        Error: error_msg_404,
-      });
+  ds.getEntityByID(TRUCK, truckID).then((truck) => {
+    if (!truck[0]) {
+      return errors.displayErrorMessage(res, 404, "truck");
     }
 
-    if (truck[0].owner !== req.auth.sub) {
-      return res
-        .status(403)
-        .json({ Error: "You do not have access to this truck" });
+    if (!ds.ownerIsValid(req, truck[0])) {
+      return errors.displayErrorMessage(res, 403, "unauthorized");
     }
 
-    // check if load id exists in database
-    ds.getEntityByID(LOAD, load_id).then((load) => {
-      if (load[0] === undefined || load[0] === null) {
-        return res.status(404).json({
-          Error: error_msg_404,
-        });
+    ds.getEntityByID(LOAD, loadID).then((load) => {
+      if (!load[0]) {
+        return errors.displayErrorMessage(res, 404, "load");
       }
 
       // check if load is actually on truck
-      if (
-        truck[0].loads.includes(load_id) &&
-        load[0] !== null &&
-        load[0].carrier === truck_id
-      ) {
-        // remove load from truck's 'loads' property
-        ds.removeLoadFromTruck(truck_id, load_id).then(
-          // nullify this load's 'carrier' property
-          patch_load_modify_carrier(load_id, null).then(res.status(204).end())
-        );
-      } else {
-        res.status(404).json({
-          Error: error_msg_404,
-        });
+      if (!truck[0].loads.includes(loadID) && load[0].carrier !== truckID) {
+        return errors.displayErrorMessage(res, 404, "either");
       }
+
+      // remove load from truck's 'loads' property
+      ds.removeLoadFromTruck(truckID, loadID).then(
+        // nullify this load's 'carrier' property
+        modifyLoadCarrier(loadID, null).then(res.status(204).end())
+      );
     });
   });
 });
 
 router.delete("/:id", function (req, res) {
-  const id = req.params.id;
+  const truckID = req.params.id;
 
-  // check if truck id exists in database
-  ds.getEntityByID(TRUCK, id).then((truck) => {
-    if (truck[0] === undefined || truck[0] === null) {
-      return res.status(404).json({
-        Error: "No truck with this truck_id exists",
-      });
+  ds.getEntityByID(TRUCK, truckID).then((truck) => {
+    if (!truck[0]) {
+      return errors.displayErrorMessage(res, 404, "truck");
     }
 
-    if (truck[0].owner !== req.auth.sub) {
-      return res
-        .status(403)
-        .json({ Error: "You do not have access to this truck" });
+    if (!ds.ownerIsValid(req, truck[0])) {
+      return errors.displayErrorMessage(res, 403, "unauthorized");
     }
-    remove_carrier_for_multiple_loads(truck[0]);
-    delete_truck(id).then(res.status(204).end());
+
+    removeCarrierForMultipleLoads(truck[0]);
+    deleteTruck(truckID).then(res.status(204).end());
   });
 });
 
 router.delete("/", function (req, res) {
-  res.status(405).json({
-    Error: "This endpoint is not supported",
-  });
+  return errors.displayErrorMessage(res, 405);
 });
 
 /* ------------- End Controller Functions ------------- */

@@ -2,6 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const router = express.Router();
 
+const errors = require("./errors");
+
 const ds = require("./datastore");
 const datastore = ds.datastore;
 
@@ -66,11 +68,8 @@ function delete_load(id) {
 /* ------------- Begin Controller Functions ------------- */
 
 router.get("/", function (req, res) {
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
   ds.getEntitiesInKind(LOAD).then((loads) => {
@@ -82,11 +81,8 @@ router.get("/", function (req, res) {
 });
 
 router.get("/:id", function (req, res) {
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
   ds.getEntityByID(LOAD, req.params.id).then((load) => {
@@ -107,11 +103,8 @@ router.post("/", function (req, res) {
       .json({ Error: "Server only accepts application/json data." });
   }
 
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
   // ignore any extraneous attributes by only extracting relevant values from request
@@ -146,11 +139,8 @@ router.put("/:id", function (req, res) {
       .json({ Error: "Server only accepts application/json data." });
   }
 
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
   const load_id = req.params.id;
@@ -200,11 +190,8 @@ router.patch("/:id", function (req, res) {
       .json({ Error: "Server only accepts application/json data." });
   }
 
-  const accepts = req.accepts(["application/json"]);
-  if (!accepts) {
-    return res.status(406).json({
-      Error: "This application only supports JSON responses",
-    });
+  if (!ds.hasJsonInAcceptHeader(req)) {
+    return errors.displayErrorMessage(res, 406);
   }
 
   const load_id = req.params.id;

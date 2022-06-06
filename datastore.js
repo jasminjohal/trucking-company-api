@@ -1,9 +1,6 @@
 const { Datastore } = require("@google-cloud/datastore");
 const TRUCK = "Truck";
 
-const { expressjwt: jwt } = require("express-jwt");
-const jwksRsa = require("jwks-rsa");
-
 require("dotenv").config();
 
 const datastore = new Datastore();
@@ -23,6 +20,10 @@ function getEntityByID(kind, id) {
     }
   });
 }
+
+// function entityExists(entity) {
+//   return entity === undefined || entity === null;
+// }
 
 // returns list of entities in kind
 function getEntitiesInKind(kind) {
@@ -152,18 +153,17 @@ function removeLoadFromTruck(truck_id, load_id) {
   });
 }
 
-const checkJwt = jwt({
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: `https://${process.env.DOMAIN}/.well-known/jwks.json`,
-  }),
+function hasJsonInAcceptHeader(req) {
+  return req.accepts(["application/json"]);
+}
 
-  // Validate the audience and the issuer.
-  issuer: `https://${process.env.DOMAIN}/`,
-  algorithms: ["RS256"],
-});
+function hasValidContentType(req) {
+  return req.get("content-type") === "application/json";
+}
+
+function ownerIsValid(req, entity) {
+  return entity.owner === req.auth.sub;
+}
 
 module.exports.Datastore = Datastore;
 module.exports.datastore = datastore;
@@ -177,4 +177,6 @@ module.exports.getFiveEntities = getFiveEntities;
 module.exports.addSelfLinksToLoad = addSelfLinksToLoad;
 module.exports.addSelfLinksToTruck = addSelfLinksToTruck;
 module.exports.removeLoadFromTruck = removeLoadFromTruck;
-module.exports.checkJwt = checkJwt;
+module.exports.hasJsonInAcceptHeader = hasJsonInAcceptHeader;
+module.exports.hasValidContentType = hasValidContentType;
+module.exports.ownerIsValid = ownerIsValid;
