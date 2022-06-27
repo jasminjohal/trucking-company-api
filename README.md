@@ -2,11 +2,11 @@
 
 ## About
 
-This is an expanded version of the final project I built for my CS 493 (Cloud Application Development) at OSU. It is an API that supports all CRUD operations for trucks and loads. The API specification is outlined below.
+This is an expanded version of the final project I built for the CS 493 (Cloud Application Development) course at OSU. It is a REST API that supports all CRUD operations for trucks and loads. The data model and the request and response parameters for all endpoints are outlined below. The API is hosted on Google APP Engine and the base URL is [https://portfolio-johalj.uw.r.appspot.com/](https://portfolio-johalj.uw.r.appspot.com/).
 
-URL: [https://portfolio-johalj.uw.r.appspot.com/](https://portfolio-johalj.uw.r.appspot.com/)
+## Authorization
 
-URL for account creation/login: [https://portfolio-johalj.uw.r.appspot.com/profile](https://portfolio-johalj.uw.r.appspot.com/profile)
+Some endpoints are protected and require an access token. To acquire this token, login/signup [here](https://portfolio-johalj.uw.r.appspot.com/profile). You will be redirected to a page that contains a JSON object. The `id` property contains the access token.
 
 # Data Model
 
@@ -72,14 +72,14 @@ None
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
-| **Outcome** | **Status Code**    | **Notes**                                                                                           |
-| ----------- | ------------------ | --------------------------------------------------------------------------------------------------- |
-| Success     | 200 OK             | The response contains a property &quot;data&quot; which is a list of all the users in the database. |
-| Failure     | 406 Not Acceptable | The client wants a media type other than JSON.                                                      |
+| **Outcome** | **Status Code**    | **Notes**                                                                                 |
+| ----------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| Success     | 200 OK             | The response contains a property `data` which is a list of all the users in the database. |
+| Failure     | 406 Not Acceptable | The client wants a media type other than JSON.                                            |
 
 ### Response Examples
 
@@ -143,7 +143,7 @@ Required
 
 ### Request Body Format
 
-JSON
+application/json
 
 ### Request JSON Attributes
 
@@ -171,7 +171,7 @@ JSON
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -256,7 +256,7 @@ None
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -307,7 +307,7 @@ Status: 403 Forbidden
 
 ```json
 {
-  "Error": "You do not have access to this truck”
+  "Error": "You do not have access to this truck"
 }
 ```
 
@@ -353,19 +353,19 @@ None
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
-| **Outcome** | **Status Code**    | **Notes**                                                                                                         |
-| ----------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Success     | 200 OK             | The response contains a property &quot;data&quot; which is a list of all the trucks owned by the specified owner. |
-| Failure     | 401 Unauthorized   | The bearer token is missing or invalid.                                                                           |
-| Failure     | 406 Not Acceptable | The client wants a media type other than JSON.                                                                    |
+| **Outcome** | **Status Code**    | **Notes**                                                                                               |
+| ----------- | ------------------ | ------------------------------------------------------------------------------------------------------- |
+| Success     | 200 OK             | The response contains a property `data` which is a list of all the trucks owned by the specified owner. |
+| Failure     | 401 Unauthorized   | The bearer token is missing or invalid.                                                                 |
+| Failure     | 406 Not Acceptable | The client wants a media type other than JSON.                                                          |
 
 ### Response Examples
 
-#### Success
+#### _Success_
 
 Status: 200 OK
 
@@ -456,7 +456,7 @@ Status: 200 OK
 }
 ```
 
-#### Failure
+#### _Failure_
 
 Status: 401 Unauthorized
 
@@ -502,7 +502,7 @@ Required
 
 ### Request Body Format
 
-JSON
+application/json
 
 ### Request JSON Attributes
 
@@ -530,7 +530,7 @@ JSON
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -586,7 +586,7 @@ Status: 403 Forbidden
 
 ```json
 {
-  "Error": "You do not have access to this truck”
+  "Error": "You do not have access to this truck"
 }
 ```
 
@@ -642,7 +642,7 @@ Required
 
 ### Request Body Format
 
-JSON
+application/json
 
 ### Request JSON Attributes
 
@@ -667,7 +667,7 @@ JSON
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -794,7 +794,7 @@ No body
 
 Success: No body
 
-Failure: JSON
+Failure: application/json
 
 ### Response Statuses
 
@@ -841,8 +841,9 @@ Status: 404 Not Found
 
 _Forbidden endpoint_
 
-| DELETE /trucks |
-| -------------- |
+```
+DELETE /trucks
+```
 
 ## Protected?
 
@@ -864,7 +865,7 @@ No body
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -917,7 +918,7 @@ Required
 
 ### Request Body Format
 
-JSON
+application/json
 
 ### Request JSON Attributes
 
@@ -943,7 +944,7 @@ JSON
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -1002,8 +1003,9 @@ Status: 415 Unsupported Media Type
 
 Allows you to get an existing load.
 
-| GET /loads/:load_id |
-| ------------------- |
+```
+GET /loads/:load_id
+```
 
 ## Protected?
 
@@ -1025,7 +1027,7 @@ None
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -1100,7 +1102,7 @@ None
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -1208,7 +1210,7 @@ Required
 
 ### Request Body Format
 
-JSON
+application/json
 
 ### Request JSON Attributes
 
@@ -1234,7 +1236,7 @@ JSON
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -1326,7 +1328,7 @@ Required
 
 ### Request Body Format
 
-JSON
+application/json
 
 ### Request JSON Attributes
 
@@ -1349,7 +1351,7 @@ JSON
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -1450,7 +1452,7 @@ No body
 
 Success: No body
 
-Failure: JSON
+Failure: application/json
 
 ### Response Statuses
 
@@ -1503,7 +1505,7 @@ No body
 
 ### Response Body Format
 
-JSON
+application/json
 
 ### Response Statuses
 
@@ -1558,7 +1560,7 @@ No body
 
 Success: No body
 
-Failure: JSON
+Failure: application/json
 
 ### Response Statuses
 
@@ -1642,7 +1644,7 @@ No body
 
 Success: No body
 
-Failure: JSON
+Failure: application/json
 
 ### Response Statuses
 
@@ -1673,7 +1675,7 @@ Status: 403 Forbidden
 
 ```json
 {
-  "Error": "You do not have access to this truck”
+  "Error": "You do not have access to this truck"
 }
 ```
 
