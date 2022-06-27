@@ -1,0 +1,6263 @@
+{
+	"info": {
+		"_postman_id": "3783fd41-0204-40bc-9840-5427ebc42900",
+		"name": "portfolio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11513610"
+	},
+	"item": [
+		{
+			"name": "[200] get users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"   //Check for appropriate 200 status code",
+							"   pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"user_id1 and user_id2 are in the list of users\", function () {",
+							"    pm.expect(pm.response.text()).to.include(pm.environment.get(\"user_id1\"));",
+							"    pm.expect(pm.response.text()).to.include(pm.environment.get(\"user_id2\"));",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/users",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] get users (client does not accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{app_url}}/users",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1FUJBGAN04HM86987\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"1B3ES56C55D137449\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Kenworth T680\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(45000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_capacity\": 45000,\n    \"truck_vin\": \"1FUJBGAN04HM86987\",\n    \"trailer_vin\": \"1B3ES56C55D137449\",\n    \"truck_model\": \"Kenworth T680\",\n    \"trailer_type\": \"Refrigerated\"\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] add truck (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_capacity\": 45000,\n    \"company_id\": \"58234\",\n    \"truck_vin\": \"1FUJBGAN04HM86987\",\n    \"trailer_vin\": \"1B3ES56C55D137449\",\n    \"truck_model\": \"Kenworth T680\",\n    \"trailer_type\": \"Refrigerated\"\n    \n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] add truck (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_capacity\": 45000,\n    \"company_id\": \"58234\",\n    \"truck_vin\": \"1FUJBGAN04HM86987\",\n    \"trailer_vin\": \"1B3ES56C55D137449\",\n    \"truck_model\": \"Kenworth T680\",\n    \"trailer_type\": \"Refrigerated\"\n    \n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] add truck (missing truck_vin attribute)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_capacity\": 45000,\n    \"trailer_vin\": \"1B3ES56C55D137449\",\n    \"truck_model\": \"Kenworth T680\",\n    \"trailer_type\": \"Refrigerated\"\n    \n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] add truck (missing trailer_vin attribute)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_capacity\": 45000,\n    \"truck_vin\": \"1FUJBGAN04HM86987\",\n    \"truck_model\": \"Kenworth T680\",\n    \"trailer_type\": \"Refrigerated\"\n    \n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[415] add truck (incorrect content type)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"415 status code\", function () {",
+							"    //Check for 415 status code",
+							"    pm.response.to.have.status(415);",
+							"});",
+							"",
+							"pm.test(\"415 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Server only accepts application/json data.\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "text/plain"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_capacity\": 45000,\n    \"truck_vin\": \"1FUJBGAN04HM86987\",\n    \"trailer_vin\": \"1B3ES56C55D137449\",\n    \"truck_model\": \"Kenworth T680\",\n    \"trailer_type\": \"Refrigerated\"\n}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck2_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1GCCS1442W8181753\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"JH4DA9340PS000417\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Mack Anthem\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Flatbed\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(30000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Flatbed\",\n    \"trailer_capacity\": 30000\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck3_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"JTJZB1BA8A2400307\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"1G4HP54KX24151104\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Freightliner Cascadia\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Dry Van\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(20000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"JTJZB1BA8A2400307\",\n    \"trailer_vin\": \"1G4HP54KX24151104\",\n    \"truck_model\": \"Freightliner Cascadia\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 20000\n    \n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck4",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck4_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"JH4KA4576KC031014\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"JH4DA3350HS000229\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Freightliner M2 106\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(40000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"JH4KA4576KC031014\",\n    \"trailer_vin\": \"JH4DA3350HS000229\",\n    \"truck_model\": \"Freightliner M2 106\",\n    \"trailer_type\": \"Refrigerated\",\n    \"trailer_capacity\": 40000\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck5",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck5_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1FABP21B4CK165368\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"3N1BC13E99L480541\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Kenworth T800\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Flatbed\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(45000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1FABP21B4CK165368\",\n    \"trailer_vin\": \"3N1BC13E99L480541\",\n    \"truck_model\": \"Kenworth T800\",\n    \"trailer_type\": \"Flatbed\",\n    \"trailer_capacity\": 45000\n    \n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck6",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck6_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1C3BF66P0GX570598\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"LM4AC113061105688\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Peterbilt 389\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(45000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1C3BF66P0GX570598\",\n    \"trailer_vin\": \"LM4AC113061105688\",\n    \"truck_model\": \"Peterbilt 389\",\n    \"trailer_type\": \"Refrigerated\",\n    \"trailer_capacity\": 45000\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck7",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck7_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id2\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"2GCEC19Z1S1244154\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"WDDDJ72X97A116339\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Peterbilt 389\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(27000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"2GCEC19Z1S1244154\",\n    \"trailer_vin\": \"WDDDJ72X97A116339\",\n    \"truck_model\": \"Peterbilt 389\",\n    \"trailer_type\": \"Refrigerated\",\n    \"trailer_capacity\": 27000\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get trucks (jwt1)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"   //Check for appropriate 200 status code",
+							"   pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"only correct number of trucks in response\", function () {",
+							"    //Check for correct number of entities",
+							"    pm.expect(pm.response.json()[\"data\"].length).to.equal(6);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get trucks (jwt2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"   //Check for appropriate 200 status code",
+							"   pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"only correct number of trucks in response\", function () {",
+							"    //Check for correct number of entities",
+							"    pm.expect(pm.response.json()[\"data\"].length).to.equal(1);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get trucks (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] get trucks (client does not accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get truck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for success 200 response code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"    //Check if the content is valid",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1FUJBGAN04HM86987\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"1B3ES56C55D137449\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Kenworth T680\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(45000);",
+							"   pm.expect(pm.response.json()[\"loads\"].length).to.eq(0);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] get truck (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] get truck (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] get truck (wrong owner)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 status code\", function () {",
+							"    pm.response.to.have.status(403);",
+							"});",
+							"",
+							"pm.test(\"403 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"You do not have access to this truck\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] get truck (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No truck with this truck_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] get truck (client does not accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] add load (missing item attribute)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"quantity\": 130,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 2010\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] add load (client does not accept JSON)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for 406 status code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							"",
+							"pm.test(\"406 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"This application only supports JSON responses\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true
+				}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Organic strawberries\",\n    \"quantity\": 240,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 2160\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[415] add load (incorrect content type)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"415 status code\", function () {",
+							"    //Check for 415 status code",
+							"    pm.response.to.have.status(415);",
+							"});",
+							"",
+							"pm.test(\"415 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Server only accepts application/json data.\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "text/plain"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Organic strawberries\",\n    \"quantity\": 240,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 2160\n  }",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add load",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"load_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Organic strawberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(240);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(2160);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Organic strawberries\",\n    \"quantity\": 240,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 2160\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add load2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"load2_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Blueberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(288);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(1454);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Blueberries\",\n    \"quantity\": 288,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 1454\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add load3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"load3_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Romaine lettuce\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(135);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Taylor Farms\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(465.75);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Romaine lettuce\",\n    \"quantity\": 135,\n    \"vendor\": \"Taylor Farms\",\n    \"weight\": 465.75\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add load4",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"load4_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Chocolate caramel apples\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(360);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(3960);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Chocolate caramel apples\",\n    \"quantity\": 360,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 3960\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add load5",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"load5_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Avocados\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(160);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Taylor Farms\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(880);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Avocados\",\n    \"quantity\": 160,\n    \"vendor\": \"Taylor Farms\",\n    \"weight\": 880\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add load6",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"load6_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Raspberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(432);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(2462.400);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Raspberries\",\n    \"quantity\": 432,\n    \"vendor\": \"Driscoll's\",\n    \"weight\": 2462.400\n  }"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get loads",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"   //Check for appropriate 200 status code",
+							"   pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"only correct number of loads in response\", function () {",
+							"    //Check for correct number of loads",
+							"    pm.expect(pm.response.json()[\"data\"].length).to.equal(6);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] get loads (client does not accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get load",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for success 200 response code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"    //Check if the content is valid//pm.expect(pm.response.json()[\"company_id\"]).to.eq(\"58234\");",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Organic strawberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(240);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(2160);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] get load (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No load with this load_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] get load (client does not accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load to truck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] assign load (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {\r",
+							"   //Check for error code 401\r",
+							"   pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"401 error message\", function () {\r",
+							"     //Check for error code 401\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] assign load (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {\r",
+							"   //Check for error code 401\r",
+							"   pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"401 error message\", function () {\r",
+							"     //Check for error code 401\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] assign load (wrong owner)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 status code\", function () {\r",
+							"   //Check for error code 403\r",
+							"   pm.response.to.have.status(403);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"403 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"You do not have access to this truck\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] assign load (invalid truck id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"   //Check for error code 404\r",
+							"   pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 404\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No truck with this truck_id exists\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] assign load (invalid load id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"   //Check for error code 404\r",
+							"   pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 404\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] assign load (invalid truck id & invalid load id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"   //Check for error code 404\r",
+							"   pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 404\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No truck with this truck_id exists\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}",
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] assign load (already assigned)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 status code\", function () {\r",
+							"   //Check for error code 403\r",
+							"   pm.response.to.have.status(403);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"403 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"The load is already loaded on another truck\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get truck (after load assigned to truck)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate 200 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides loads is valid\", function () {",
+							"    //Check if the content is valid",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1FUJBGAN04HM86987\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"1B3ES56C55D137449\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Kenworth T680\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(45000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"loads content is valid\", function () {",
+							"   //Check if load content is valid",
+							"   pm.expect(pm.response.json()[\"loads\"][0][\"id\"]).to.eq(pm.environment.get(\"load_id\"));",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"loads\"][0][\"id\"];",
+							"   pm.expect(pm.response.json()[\"loads\"][0][\"self\"]).to.eq(self_url);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get load (after load assigned to boat)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate status code 200",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides carrier is valid\", function () {",
+							"    //Check for appropriate content for load including self attribute",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Organic strawberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(240);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(2160);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.environment.get(\"load_id\");",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"carrier content is valid\", function () {",
+							"    //Check for appropriate content for carrier including self attribute",
+							"    pm.expect(pm.response.json()[\"carrier\"][\"id\"]).to.eq(pm.environment.get(\"truck_id\"));",
+							"    const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"carrier\"][\"id\"];",
+							"    pm.expect(pm.response.json()[\"carrier\"][\"self\"]).to.eq(self_url);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] remove load from truck (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {\r",
+							"   //Check for error code 401\r",
+							"   pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"401 error message\", function () {\r",
+							"     //Check for error code 401\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] remove load from truck (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {\r",
+							"   //Check for error code 401\r",
+							"   pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"401 error message\", function () {\r",
+							"     //Check for error code 401\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] remove load from truck (wrong owner)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 status code\", function () {\r",
+							"   //Check for error code 403\r",
+							"   pm.response.to.have.status(403);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"403 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"You do not have access to this truck\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] remove load from truck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {\r",
+							"    //Check for apprropriate status code 204\r",
+							"    pm.response.to.have.status(204);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] remove load from truck (not on truck)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"    //Check for apprropriate status code 204\r",
+							"    pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No truck with this truck_id is loaded with the load with this load_id\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] remove load from truck (invalid truck_id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"    //Check for apprropriate status code 204\r",
+							"    pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No truck with this truck_id exists\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] remove load from truck (invalid load_id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"    //Check for apprropriate status code 204\r",
+							"    pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] remove load from truck (invalid truck_id & invalid load_id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 status code\", function () {\r",
+							"    //Check for apprropriate status code 204\r",
+							"    pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"404 error message\", function () {\r",
+							"     //Check for error code 403\r",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No truck with this truck_id exists\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}",
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load to truck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}",
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete load",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] delete load (invalid load_id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for appropriate 404 status code",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get truck (after load deleted)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate 200 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides loads is valid\", function () {",
+							"    //Check if the content is valid",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1FUJBGAN04HM86987\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"1B3ES56C55D137449\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Kenworth T680\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Refrigerated\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(45000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"loads content is valid\", function () {",
+							"   //Check if load content is valid",
+							"   pm.expect(pm.response.json()[\"loads\"].length).to.eq(0);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load2 to truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load3 to truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] delete truck (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"   //Check for error code 401",
+							"   pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for error code 401",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] delete truck (missing JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"   //Check for error code 401",
+							"   pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for error code 401",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] delete truck (wrong owner)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 status code\", function () {",
+							"   //Check for error code 403",
+							"   pm.response.to.have.status(403);",
+							"});",
+							"",
+							"",
+							"pm.test(\"403 error message\", function () {",
+							"     //Check for error code 403",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"You do not have access to this truck\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] delete truck (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for appropriate 404 status code",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No truck with this truck_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] get truck2 (after deletion)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No truck with this truck_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get load2 (after truck2 deleted)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate status code 200",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides carrier is valid\", function () {",
+							"    //Check for appropriate content for load including self attribute",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Blueberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(288);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(1454);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.environment.get(\"load2_id\");",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"carrier content is valid\", function () {",
+							"    //Check for appropriate content for carrier including self attribute",
+							"    pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get load3 (after truck2 deleted)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate status code 200",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides carrier is valid\", function () {",
+							"    //Check for appropriate content for load including self attribute",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Romaine lettuce\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(135);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Taylor Farms\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(465.75);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.environment.get(\"load3_id\");",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"carrier content is valid\", function () {",
+							"    //Check for appropriate content for carrier including self attribute",
+							"    pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[201] add truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Set boat id environment variable from response",
+							"pm.environment.set(\"truck2_id\", pm.response.json()[\"id\"]);",
+							"",
+							"pm.test(\"201 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1GCCS1442W8181753\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"JH4DA9340PS000417\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Mack Anthem\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Flatbed\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(30000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Flatbed\",\n    \"trailer_capacity\": 30000\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load2 to truck2 Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load3 to truck2 Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get truck2 (after loads assigned to truck)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate 200 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1GCCS1442W8181753\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"JH4DA9340PS000417\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Mack Anthem\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Flatbed\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(30000);",
+							"   pm.expect(pm.response.json()[\"loads\"].length).to.eq(2);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] put truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid after put\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1GCCS1442W8181753\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"JH4DA9340PS000417\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Mack Anthem\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Dry Van\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(28000);",
+							"   pm.expect(pm.response.json()[\"loads\"].length).to.eq(0);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] put truck2 (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"   //Check for error code 401",
+							"   pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for error code 401",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] put truck2 (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 status code\", function () {",
+							"   //Check for error code 401",
+							"   pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for error code 401",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] put truck2 (wrong owner)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 status code\", function () {",
+							"   //Check for error code 403",
+							"   pm.response.to.have.status(403);",
+							"});",
+							"",
+							"",
+							"pm.test(\"403 error message\", function () {",
+							"     //Check for error code 403",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.equal(\"You do not have access to this truck\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] put truck2 (missing truck_vin attribute)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] put truck (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No truck with this truck_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] put truck (client doesn't accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							"",
+							"",
+							"pm.test(\"406 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"This application only supports JSON responses\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true,
+					"content-type": true
+				}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[415] put truck (incorrect content type)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"415 status code\", function () {",
+							"    //Check for 415 status code",
+							"    pm.response.to.have.status(415);",
+							"});",
+							"",
+							"pm.test(\"415 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Server only accepts application/json data.\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GCCS1442W8181753\",\n    \"trailer_vin\": \"JH4DA9340PS000417\",\n    \"truck_model\": \"Mack Anthem\",\n    \"trailer_type\": \"Dry Van\",\n    \"trailer_capacity\": 28000\n}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get load2 (after truck2 reset)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate status code 200",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides carrier is valid\", function () {",
+							"    //Check for appropriate content for load including self attribute",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Blueberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(288);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Driscoll's\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(1454);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.environment.get(\"load2_id\");",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"carrier content is valid\", function () {",
+							"    //Check for appropriate content for carrier including self attribute",
+							"    pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get load3 (after truck2 reset)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate status code 200",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content besides carrier is valid\", function () {",
+							"    //Check for appropriate content for load including self attribute",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Romaine lettuce\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(135);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Taylor Farms\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(465.75);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.environment.get(\"load3_id\");",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"carrier content is valid\", function () {",
+							"    //Check for appropriate content for carrier including self attribute",
+							"    pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] assign load2 to truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 status code\", function () {",
+							"    //Check for status code 204",
+							"    pm.response.to.have.status(204);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}",
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] put load2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"",
+							"pm.test(\"content is valid after put\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Blueberries\");",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(288);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Hillcrest Produce\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(1450);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"item\": \"Blueberries\",\n  \"quantity\": 288,\n  \"vendor\": \"Hillcrest Produce\",\n  \"weight\": 1450\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] get truck2 (after load2 reset)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for appropriate 200 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"content is valid\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1GCCS1442W8181753\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"JH4DA9340PS000417\");",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Mack Anthem\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Dry Van\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(28000);",
+							"   pm.expect(pm.response.json()[\"loads\"].length).to.eq(0);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] put load2 (missing vendor attribute)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"item\": \"Blueberries\",\n  \"quantity\": 288,\n  \"weight\": 1450\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] put load (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No load with this load_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"item\": \"Blueberries\",\n  \"quantity\": 288,\n  \"vendor\": \"Hillcrest Produce\",\n  \"weight\": 1450\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] put load (client doesn't accept json)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							"",
+							"",
+							"pm.test(\"406 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"This application only supports JSON responses\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"item\": \"Blueberries\",\n  \"quantity\": 288,\n  \"vendor\": \"Hillcrest Produce\",\n  \"weight\": 1450\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[415] put load (incorrect content type)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"415 status code\", function () {",
+							"    //Check for 415 status code",
+							"    pm.response.to.have.status(415);",
+							"});",
+							"",
+							"pm.test(\"415 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Server only accepts application/json data.\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"item\": \"Blueberries\",\n  \"quantity\": 288,\n  \"vendor\": \"Driscoll's\",\n  \"weight\": 1454\n}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] patch truck3 (truck_vin and trailer_vin)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"",
+							"pm.test(\"unchanged properties remain unaffected\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"owner\"]).to.eq(pm.environment.get(\"user_id1\"));",
+							"   pm.expect(pm.response.json()[\"truck_model\"]).to.eq(\"Freightliner Cascadia\");",
+							"   pm.expect(pm.response.json()[\"trailer_type\"]).to.eq(\"Dry Van\");",
+							"   pm.expect(pm.response.json()[\"trailer_capacity\"]).to.eq(20000);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/trucks/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"changed properties were updated\", function () {",
+							"   //Check if the response content is valid and matches the expected values",
+							"   pm.expect(pm.response.json()[\"truck_vin\"]).to.eq(\"1GTEC14W1YZ246726\");",
+							"   pm.expect(pm.response.json()[\"trailer_vin\"]).to.eq(\"1J4RR5GT2BC512008\");",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] patch truck3 (empty request)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n}\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] patch truck (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 not found\", function () {",
+							"    //Check for 401 response",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] patch truck (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 not found\", function () {",
+							"    //Check for 401 response",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[403] patch truck (wrong owner)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"403 not found\", function () {",
+							"    //Check for 403 response",
+							"    pm.response.to.have.status(403);",
+							"});",
+							"",
+							"",
+							"pm.test(\"403 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"You do not have access to this truck\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] patch truck (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No truck with this truck_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{invalid_truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{invalid_truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] patch truck (client doesn't accept JSON)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							"",
+							"",
+							"pm.test(\"406 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"This application only supports JSON responses\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[415] patch truck (incorrect content type)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"415 status code\", function () {",
+							"    //Check for 415 status code",
+							"    pm.response.to.have.status(415);",
+							"});",
+							"",
+							"pm.test(\"415 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Server only accepts application/json data.\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"truck_vin\": \"1GTEC14W1YZ246726\",\n    \"trailer_vin\": \"1J4RR5GT2BC512008\"\n}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[200] patch load3 (item only)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200 status code\", function () {",
+							"    //Check for 201 status code",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"unchanged properties remain unaffected\", function () {",
+							"   pm.expect(pm.response.json()[\"quantity\"]).to.eq(135);",
+							"   pm.expect(pm.response.json()[\"vendor\"]).to.eq(\"Taylor Farms\");",
+							"   pm.expect(pm.response.json()[\"weight\"]).to.eq(465.75);",
+							"   pm.expect(pm.response.json()[\"carrier\"]).to.eq(null);",
+							"   //Check if the self url is correct",
+							"   const self_url = pm.environment.get(\"app_url\") + \"/loads/\" + pm.response.json()[\"id\"];",
+							"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+							"});",
+							"",
+							"pm.test(\"changed properties were updated\", function () {",
+							"   pm.expect(pm.response.json()[\"item\"]).to.eq(\"Kale\");",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Kale\"\n}\n\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[400] patch load3 (empty request)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"400 status code\", function () {",
+							"    //Check for 400 status code",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"400 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"The request object is missing at least one of the required attributes\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n}\n"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] patch load (invalid id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for 404 response",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No load with this load_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Kale\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{invalid_load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{invalid_load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[406] patch load (client doesn't accept JSON)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"406 status code\", function () {",
+							"    //Check for success 406 response code",
+							"    pm.response.to.have.status(406);",
+							"});",
+							"",
+							"",
+							"pm.test(\"406 error message\", function () {",
+							"     //Check for error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"This application only supports JSON responses\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Kale\"\n}"
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[415] patch load (incorrect content type)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"415 status code\", function () {",
+							"    //Check for 415 status code",
+							"    pm.response.to.have.status(415);",
+							"});",
+							"",
+							"pm.test(\"415 error message\", function () {",
+							"     //Check for appropriate error message",
+							"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Server only accepts application/json data.\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"item\": \"Kale\"\n}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] delete trucks (no JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 unauthorized\", function () {",
+							"    //Check for appropriate 401 status code",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[401] delete trucks (invalid JWT)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"401 unauthorized\", function () {",
+							"    //Check for appropriate 401 status code",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"",
+							"pm.test(\"401 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"Invalid token.\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{invalid_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[405] delete trucks",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"405 not allowed\", function () {",
+							"    //Check for appropriate 405 status code",
+							"    pm.response.to.have.status(405);",
+							"});",
+							"",
+							"",
+							"pm.test(\"405 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"This endpoint is not supported\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck4",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck4_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck4_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck5",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck5_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck5_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck6",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt1}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck6_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck6_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete truck7",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/trucks/{{truck7_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"trucks",
+						"{{truck7_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[405] delete loads",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"405 not allowed\", function () {",
+							"    //Check for appropriate 405 status code",
+							"    pm.response.to.have.status(405);",
+							"});",
+							"",
+							"",
+							"pm.test(\"405 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"This endpoint is not supported\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[404] delete load",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"404 not found\", function () {",
+							"    //Check for appropriate 404 status code",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"",
+							"pm.test(\"404 error message\", function () {",
+							"     //Check for appropriate error message",
+							"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete load2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load2_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load2_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete load3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load3_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load3_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete load4",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load4_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load4_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete load5",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load5_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load5_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[204] delete load6",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"204 no content\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{app_url}}/loads/{{load6_id}}",
+					"host": [
+						"{{app_url}}"
+					],
+					"path": [
+						"loads",
+						"{{load6_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
