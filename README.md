@@ -6,7 +6,7 @@ This is an expanded version of the final project I built for the CS 493 (Cloud A
 
 ## Authorization
 
-Some endpoints are protected and require an access token. To acquire this token, login/signup [here](https://portfolio-johalj.uw.r.appspot.com/profile). You will be redirected to a page that contains a JSON object. The `id` property contains the access token.
+Some endpoints are protected and require an access token. To acquire this token, login/signup [here](https://portfolio-johalj.uw.r.appspot.com/profile). You will be redirected to a page that contains a JSON object. The `id_token` property contains the access token.
 
 # Table of Contents
 
