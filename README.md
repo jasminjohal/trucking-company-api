@@ -2,11 +2,32 @@
 
 ## About
 
-This is an expanded version of the final project I built for the CS 493 (Cloud Application Development) course at OSU. It is a REST API that supports all CRUD operations for trucks and loads. The data model and the request and response parameters for all endpoints are outlined below. The API is hosted on Google APP Engine and the base URL is [https://portfolio-johalj.uw.r.appspot.com/](https://portfolio-johalj.uw.r.appspot.com/).
+This is an expanded version of the final project I built for the CS 493 (Cloud Application Development) course at OSU. It is a REST API that supports all CRUD operations for trucks and loads. The data model and the request and response parameters for all endpoints are outlined below. The API is hosted on Google App Engine and the base URL is [https://portfolio-johalj.uw.r.appspot.com/](https://portfolio-johalj.uw.r.appspot.com/).
 
 ## Authorization
 
 Some endpoints are protected and require an access token. To acquire this token, login/signup [here](https://portfolio-johalj.uw.r.appspot.com/profile). You will be redirected to a page that contains a JSON object. The `id` property contains the access token.
+
+# Table of Contents
+
+1. [Data Model](#data-model)
+2. [View All Users](#view-all-users)
+3. [Create a Truck](#create-a-truck)
+4. [View a Truck](#view-a-truck)
+5. [View All Trucks](#view-all-trucks)
+6. [Edit a Truck (Put)](#edit-a-truck-put)
+7. [Edit a Truck (Patch)](#edit-a-truck-patch)
+8. [Delete a Truck](#delete-a-truck)
+9. [Delete All Trucks](#delete-all-trucks)
+10. [Create a Load](#create-a-load)
+11. [View a Load](#view-a-load)
+12. [View All Loads](#view-all-loads)
+13. [Edit a Load (Put)](#edit-a-load-put)
+14. [Edit a Load (Patch)](#edit-a-load-patch)
+15. [Delete a Load](#delete-a-load)
+16. [Delete All Loads](#delete-all-loads)
+17. [Managing Loads: Load Assigned to Truck](#managing-loads-load-assigned-to-truck)
+18. [Managing Loads: Load Removed from Truck](#managing-loads-load-removed-from-truck)
 
 # Data Model
 
@@ -46,7 +67,7 @@ The app stores three kinds of entities in Datastore: Users, Trucks, and Loads. U
 | `quantity`   | Integer               | The number of cases of the item.                                                         | 240                              | Yes           | An integer between 1 and 100,000                              |
 | `weight`     | Floating point number | The weight (lbs) of the load.                                                            | 465.75                           | Yes           | A number between 1 and 100,000                                |
 
-# View all Users
+# View All Users
 
 List all the users.
 
@@ -327,7 +348,7 @@ Status: 406 Not Acceptable
 }
 ```
 
-# View all Trucks
+# View All Trucks
 
 List all the trucks owned by a particular owner.
 
@@ -1076,7 +1097,7 @@ Status: 406 Not Acceptable
 }
 ```
 
-# View all Loads
+# View All Loads
 
 List all the loads.
 
