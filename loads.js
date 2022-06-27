@@ -11,7 +11,7 @@ const LOAD = "Load";
 
 router.use(bodyParser.json());
 
-/* ------------- Begin load Model Functions ------------- */
+/* ------------- Begin Load Model Functions ------------- */
 
 function postLoad(vendor, item, quantity, weight) {
   var key = datastore.key(LOAD);

@@ -10,7 +10,7 @@ const checkJwt = jwt({
     jwksUri: `https://${process.env.DOMAIN}/.well-known/jwks.json`,
   }),
 
-  // Validate the audience and the issuer.
+  // validate the audience and the issuer
   issuer: `https://${process.env.DOMAIN}/`,
   algorithms: ["RS256"],
 });
