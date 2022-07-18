@@ -4,6 +4,10 @@
 
 This is an expanded version of the final project I built for the CS 493 (Cloud Application Development) course at OSU. It is a REST API that supports all CRUD operations for trucks and loads. The data model and the request and response parameters for all endpoints are outlined below. The API is hosted on Google App Engine and the base URL is [https://portfolio-johalj.uw.r.appspot.com/](https://portfolio-johalj.uw.r.appspot.com/).
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/35678644/179431710-8ccfe4e0-6789-4c65-87a1-004a9ff88ec7.png" alt="add truck postman endpoint" height="600">
+</p>
+
 ## Authorization
 
 Some endpoints are protected and require an access token. To acquire this token, login/signup [here](https://portfolio-johalj.uw.r.appspot.com/profile). You will be redirected to a page that contains a JSON object. The `id_token` property contains the access token.
